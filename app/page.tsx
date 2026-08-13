@@ -1975,11 +1975,17 @@ export default function Home() {
   }
 
   function revealAnswer(question: Question) {
+    if (revealedIds.includes(question.id)) return;
+
+    if (question.kind === "서술형") {
+      setRevealedIds((before) => [...before, question.id]);
+      return;
+    }
+
     const answer = answers[question.id] ?? "";
-    if (!answer.trim() || revealedIds.includes(question.id)) return;
+    if (!answer.trim()) return;
     setRevealedIds((before) => [...before, question.id]);
 
-    if (question.kind === "서술형") return;
     const correct = checkAnswer(question, answer);
     const nextWrong = correct
       ? wrongIds.filter((id) => id !== question.id)
