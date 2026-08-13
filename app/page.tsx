@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { checkShortAnswer } from "../src/grading.js";
+import { visionQuestions } from "./vision-questions";
 
 type Kind = "객관식" | "단답형" | "서술형";
 type Category =
@@ -11,7 +12,9 @@ type Category =
   | "ML 기초·검증"
   | "회귀·신경망"
   | "NLP·Transformer"
-  | "LLM·평가·안전";
+  | "LLM·평가·안전"
+  | "CNN·이미지 모델"
+  | "ViT·학습 전략";
 
 type Question = {
   id: string;
@@ -45,6 +48,8 @@ const categories: Category[] = [
   "회귀·신경망",
   "NLP·Transformer",
   "LLM·평가·안전",
+  "CNN·이미지 모델",
+  "ViT·학습 전략",
 ];
 
 const kinds: Kind[] = ["객관식", "단답형", "서술형"];
@@ -58,6 +63,8 @@ const accent: Record<Category, string> = {
   "회귀·신경망": "#e4a11b",
   "NLP·Transformer": "#e5526b",
   "LLM·평가·안전": "#526477",
+  "CNN·이미지 모델": "#2f7d8c",
+  "ViT·학습 전략": "#bc5f6a",
 };
 
 /*
@@ -1735,6 +1742,7 @@ const questionBank: Question[] = [
   Q("llm-22", "LLM·평가·안전", "객관식", "사고형", "모호성을 줄이는 프롬프트 구성으로 가장 적절한 것은?", "역할·작업·입력 경계·제약·출력 형식과 필요한 예시를 구분해 제시한다.", "좋은 프롬프트는 해야 할 일과 제공 데이터, 금지 사항, 출력 schema를 분리합니다. few-shot 예시는 실제 입력과 유사하고 정답 형식이 일관되어야 합니다.", undefined, ["역할·작업·입력 경계·제약·출력 형식과 필요한 예시를 구분해 제시한다.", "서로 충돌하는 지시를 설명 없이 반복한다.", "입력 데이터와 명령을 구분하지 않는다.", "원하는 출력 형식을 숨긴다."]),
   Q("llm-23", "LLM·평가·안전", "객관식", "고난도", "jailbreaking에 대한 설명과 대응의 연결로 옳은 것은?", "안전 제약을 우회하도록 모델을 유도하는 공격이며 권한 제한·입력 분리·출력 검증·공격 평가를 함께 적용한다.", "jailbreak는 역할극, 인코딩, 다단계 지시 등으로 모델의 안전 행동을 우회하려는 입력입니다. 단일 금지 문구로 완전히 막기 어려워 도구 권한, 검증, 모니터링과 반복 평가가 필요합니다.", undefined, ["안전 제약을 우회하도록 모델을 유도하는 공격이며 권한 제한·입력 분리·출력 검증·공격 평가를 함께 적용한다.", "모델 크기를 측정하는 정상 benchmark다.", "temperature를 0으로 하면 모든 jailbreak가 완전히 차단된다.", "학습 데이터의 중복을 제거하는 전처리만 뜻한다."]),
   Q("llm-24", "LLM·평가·안전", "객관식", "사고형", "LLM 평가 설계를 구성하는 핵심 세 요소의 연결로 가장 적절한 것은?", "대표성 있는 평가 데이터, 목적에 맞는 지표, 재현 가능한 평가 프로토콜", "평가 점수는 문항 분포, metric 정의, prompt와 decoding 및 채점 절차에 따라 달라집니다. 세 요소를 함께 고정하고 오류 유형과 신뢰구간도 확인해야 비교가 의미 있습니다.", undefined, ["대표성 있는 평가 데이터, 목적에 맞는 지표, 재현 가능한 평가 프로토콜", "모델 이름, 로고 색상, 파일 확장자", "학습률, 브라우저 크기, 운영체제 이름", "token 하나, 정답 하나, 평가자 없음"]),
+  ...visionQuestions as Question[],
 ];
 
 function shuffle<T>(items: T[]): T[] {

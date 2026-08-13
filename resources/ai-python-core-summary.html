@@ -26,7 +26,7 @@
     .cover { min-height: 262mm; padding: 20mm 5mm 10mm; display: flex; flex-direction: column; justify-content: space-between; break-after: page; }
     .cover .mark { width: 18mm; height: 4mm; margin-bottom: 20mm; background: #80bf35; }
     .cover .subtitle { max-width: 135mm; margin: 8mm 0 0; color: #51625e; font-size: 13pt; line-height: 1.65; }
-    .cover .bands { display: grid; grid-template-columns: repeat(7, 1fr); height: 18mm; gap: 2mm; }
+    .cover .bands { display: grid; grid-template-columns: repeat(9, 1fr); height: 18mm; gap: 2mm; }
     .cover .bands i { display: block; border-radius: 3px; }
     .cover .meta { display: flex; justify-content: space-between; color: #60706d; font-size: 8.5pt; }
     .toc { break-after: page; }
@@ -62,9 +62,9 @@
       <p class="subtitle">Python과 데이터 처리부터 머신러닝, 신경망, 자연어 처리, Transformer, LLM 평가·안전까지의 핵심 개념과 수식·코드 패턴을 한 문서로 정리한 정보형 레퍼런스.</p>
     </div>
     <div class="bands" aria-hidden="true">
-      <i style="background:#ef8354"></i><i style="background:#3a86ff"></i><i style="background:#06a77d"></i><i style="background:#8b5cf6"></i><i style="background:#e4a11b"></i><i style="background:#e5526b"></i><i style="background:#526477"></i>
+      <i style="background:#ef8354"></i><i style="background:#3a86ff"></i><i style="background:#06a77d"></i><i style="background:#8b5cf6"></i><i style="background:#e4a11b"></i><i style="background:#e5526b"></i><i style="background:#526477"></i><i style="background:#2f7d8c"></i><i style="background:#bc5f6a"></i>
     </div>
-    <div class="meta"><span>168문항 연계 범위</span><span>2026.08</span></div>
+    <div class="meta"><span>216문항 연계 범위</span><span>2026.08</span></div>
   </section>
 
   <section class="toc">
@@ -78,6 +78,8 @@
       <div class="toc-card"><b>05 회귀 · 신경망</b><span>최소제곱, 최대우도, 로지스틱 회귀, ReLU, 최적화, 역전파, PyTorch</span></div>
       <div class="toc-card"><b>06 NLP · Transformer</b><span>토큰, embedding, RNN·LSTM·GRU, Seq2Seq, attention, BERT, T5</span></div>
       <div class="toc-card"><b>07 LLM · 평가 · 안전</b><span>사전학습, scaling, SFT·RLHF, decoding, prompting, RAG, 평가, 한계</span></div>
+      <div class="toc-card"><b>08 CNN · 이미지 모델</b><span>합성곱, 수용영역, pooling, AlexNet, VGG, ResNet, MobileNet</span></div>
+      <div class="toc-card"><b>09 ViT · 학습 전략</b><span>이미지 attention, positional encoding, 활성화, 초기화, 정규화, 전이학습</span></div>
       <div class="toc-card"><b>Appendix</b><span>핵심 수식, 혼동하기 쉬운 비교, 코드 흐름 요약</span></div>
     </div>
     <p class="footer-note">이 문서는 개념·공식·코드 동작을 빠르게 확인하기 위한 요약본이며, 특정 평가의 문항 수·배점·제한 시간을 규정하지 않는다.</p>
@@ -793,6 +795,94 @@ for x, y in loader:
       <li>고위험 판단의 사람 검토</li>
       <li>사실성·편향·공격·거부율을 포함한 지속 평가</li>
       <li>운영 log, incident 대응, model·prompt·index 버전 관리</li>
+    </ol>
+  </section>
+
+  <section class="chapter">
+    <div class="chapter-label">CHAPTER 08</div>
+    <h2>CNN · 이미지 모델</h2>
+    <p class="lead">공간 구조를 보존하는 합성곱의 계산 원리와 대표 이미지 모델의 설계 선택을 한 흐름으로 정리한다.</p>
+
+    <h3>합성곱의 구조</h3>
+    <div class="grid-2">
+      <div class="card"><h4>국소 연결</h4><p>작은 커널은 한 번에 인접한 픽셀만 본다. 같은 커널을 모든 위치에 적용하는 가중치 공유로 완전연결층보다 적은 파라미터로 위치별 패턴을 찾는다.</p></div>
+      <div class="card"><h4>채널과 필터</h4><p>하나의 출력 채널은 모든 입력 채널을 관통하는 필터 하나가 만든다. 입력이 <code>N×Cin×H×W</code>, 커널이 <code>Cout×Cin×Kh×Kw</code>이면 출력 채널은 <code>Cout</code>이다.</p></div>
+      <div class="card"><h4>계층적 특징</h4><p>앞쪽은 모서리·질감 같은 국소 특징, 뒤쪽은 물체 부분과 전체 형태처럼 더 추상적인 특징을 표현한다. 층을 거칠수록 한 출력이 보는 수용영역도 커진다.</p></div>
+      <div class="card"><h4>비선형성</h4><p>선형 합성곱만 연속하면 전체도 하나의 선형변환이다. ReLU 같은 활성화가 층 사이에 들어가야 복잡한 결정 경계를 표현할 수 있다.</p></div>
+    </div>
+    <div class="formula">H′ = floor((H − K<sub>h</sub> + 2P<sub>h</sub>) / S<sub>h</sub>) + 1<br>W′ = floor((W − K<sub>w</sub> + 2P<sub>w</sub>) / S<sub>w</sub>) + 1</div>
+    <div class="formula">합성곱 파라미터 = C<sub>out</sub> × C<sub>in</sub> × K<sub>h</sub> × K<sub>w</sub> + C<sub>out</sub><small>출력 채널마다 bias 하나를 쓰는 경우</small></div>
+
+    <h3>Pooling과 계산 자원</h3>
+    <p>Max pooling 또는 stride convolution은 공간 크기를 줄여 계산량과 작은 위치 변화에 대한 민감도를 낮춘다. 대신 세밀한 위치 정보가 손실될 수 있으므로 pooling이 중요한 정보를 항상 보존한다고 가정하면 안 된다.</p>
+    <table><thead><tr><th>측정값</th><th>주로 말해 주는 것</th><th>주의점</th></tr></thead><tbody>
+      <tr><td>파라미터 수</td><td>학습할 가중치와 모델 저장 규모</td><td>적어도 큰 feature map에서는 계산이 많을 수 있다.</td></tr>
+      <tr><td>Activation memory</td><td>중간 feature map 저장량</td><td>학습에서는 역전파를 위해 여러 activation을 보관한다.</td></tr>
+      <tr><td>FLOPs</td><td>한 번의 forward에 필요한 산술 연산량</td><td>실제 속도는 메모리 접근과 하드웨어에도 좌우된다.</td></tr>
+    </tbody></table>
+
+    <h3>대표 모델의 설계 변화</h3>
+    <table><thead><tr><th>모델</th><th>핵심 설계</th><th>해석</th></tr></thead><tbody>
+      <tr><td>AlexNet</td><td>5개 convolution + 3개 FC, ReLU, 큰 첫 커널과 stride</td><td>대규모 이미지 분류에서 깊은 CNN의 가능성을 보여 준 초기 구조</td></tr>
+      <tr><td>VGG</td><td>3×3 convolution 반복, 블록 사이 2×2 max pooling</td><td>규칙적이고 단순하지만 FC 파라미터와 convolution 계산량이 크다.</td></tr>
+      <tr><td>ResNet</td><td><code>F(x)+x</code> identity shortcut, bottleneck block</td><td>깊은 plain network의 degradation과 최적화 문제를 완화한다.</td></tr>
+      <tr><td>MobileNet</td><td>depthwise spatial convolution + 1×1 pointwise convolution</td><td>공간 처리와 채널 혼합을 분리해 모바일 환경의 연산량을 줄인다.</td></tr>
+    </tbody></table>
+    <div class="note"><b>작은 커널을 쌓는 이유.</b> stride 1의 3×3 convolution 두 층은 5×5 수용영역을 만들면서, 채널 수가 같을 때 약 18C² 대 25C²로 파라미터가 적고 활성화를 한 번 더 적용할 수 있다.</div>
+    <div class="formula">Depthwise separable / standard 비용 비 ≈ 1/C + 1/K²<small>K×K 커널, 입력·출력 채널을 C로 단순화한 경우</small></div>
+  </section>
+
+  <section class="chapter">
+    <div class="chapter-label">CHAPTER 09</div>
+    <h2>ViT · 학습 전략</h2>
+    <p class="lead">이미지를 token으로 보는 Transformer의 구조와, 모델 성능을 안정적으로 끌어내기 위한 실전 선택을 구분한다.</p>
+
+    <h3>이미지 Attention과 ViT</h3>
+    <p>ViT는 이미지를 고정 크기 patch로 나누고 각 patch를 token embedding으로 바꾼다. self-attention은 모든 patch 사이의 관계를 직접 계산하므로 전역 맥락을 빠르게 연결하지만, CNN의 국소성 같은 inductive bias가 약해 충분한 데이터와 정규화가 중요하다.</p>
+    <div class="grid-3">
+      <div class="card"><h4>Query</h4><p>현재 token이 어떤 정보를 찾는지 나타낸다.</p></div>
+      <div class="card"><h4>Key</h4><p>Query와 비교해 관련성을 계산하는 기준이다.</p></div>
+      <div class="card"><h4>Value</h4><p>attention weight로 가중합하여 실제 전달하는 내용이다.</p></div>
+    </div>
+    <div class="formula">Attention(Q,K,V) = softmax(QK<sup>T</sup> / √d<sub>k</sub>)V</div>
+    <table><thead><tr><th>위치 표현</th><th>특징</th><th>주요 고려점</th></tr></thead><tbody>
+      <tr><td>학습형 absolute</td><td>데이터에 맞춘 위치 vector를 학습</td><td>해상도와 patch 격자가 달라지면 보간이 필요할 수 있다.</td></tr>
+      <tr><td>고정 sinusoidal</td><td>학습하지 않는 규칙적 위치 신호</td><td>길이 변화에는 유연하지만 과제 맞춤 적응은 제한된다.</td></tr>
+      <tr><td>relative</td><td>token 사이 거리와 방향을 표현</td><td>입력 해상도 변화에 더 유연할 수 있다.</td></tr>
+    </tbody></table>
+    <p><b>DeiT</b>는 CNN teacher의 출력 분포와 실제 label을 함께 사용해 ViT student를 distillation한다. <b>Swin Transformer</b>는 window attention으로 계산을 줄이고 shifted window로 창 사이 정보를 교환하며 계층적 feature map을 만든다.</p>
+
+    <h3>활성화와 초기화</h3>
+    <table><thead><tr><th>함수</th><th>장점</th><th>한계</th></tr></thead><tbody>
+      <tr><td>Sigmoid</td><td>0~1 출력, 확률 해석</td><td>포화 기울기 소실, 양수 중심, exp 비용</td></tr>
+      <tr><td>tanh</td><td>−1~1, 0 중심</td><td>포화 구간의 기울기 소실</td></tr>
+      <tr><td>ReLU</td><td>양수 구간 비포화, 계산이 단순</td><td>음수 구간 gradient가 0인 dying ReLU</td></tr>
+      <tr><td>Leaky ReLU</td><td>음수 구간에 작은 gradient 유지</td><td>음수 기울기 크기를 정해야 하며 항상 더 좋은 것은 아니다.</td></tr>
+      <tr><td>ELU</td><td>음수 출력과 부드러운 변화</td><td>exp 연산과 α 선택이 필요하다.</td></tr>
+    </tbody></table>
+    <p>모든 가중치를 0으로 두면 같은 층의 뉴런들이 같은 gradient를 받아 대칭이 깨지지 않는다. 무작위 초기화는 대칭을 깨되 층을 지나며 activation과 gradient의 분산이 지나치게 커지거나 작아지지 않도록 규모를 맞춰야 한다.</p>
+    <div class="grid-2">
+      <div class="card"><h4>Xavier</h4><p>입력·출력 차원을 고려하며 tanh 계열에서 signal scale을 유지하는 데 주로 사용한다.</p></div>
+      <div class="card"><h4>He</h4><p>ReLU의 음수 절반이 0이 되는 성질을 고려해 더 큰 분산을 사용한다.</p></div>
+    </div>
+
+    <h3>정규화와 학습률</h3>
+    <table><thead><tr><th>전략</th><th>핵심 동작</th><th>확인할 점</th></tr></thead><tbody>
+      <tr><td>L1</td><td>절댓값 합을 벌점으로 추가</td><td>일부 가중치를 정확히 0으로 만들어 희소성을 유도할 수 있다.</td></tr>
+      <tr><td>L2 / weight decay</td><td>큰 가중치를 부드럽게 감소</td><td>규제가 너무 강하면 underfitting이 생긴다.</td></tr>
+      <tr><td>Dropout</td><td>훈련 중 unit을 확률적으로 제거</td><td>추론 모드 전환과 scaling을 정확히 적용한다.</td></tr>
+      <tr><td>Data augmentation</td><td>label을 보존하는 변환으로 학습 sample 확장</td><td>crop·flip·색 변화가 과제의 정답 의미를 바꾸지 않아야 한다.</td></tr>
+      <tr><td>Early stopping</td><td>validation 성능이 나빠지기 전 checkpoint 선택</td><td>test set은 선택에 쓰지 않는다.</td></tr>
+    </tbody></table>
+    <p>학습률이 너무 크면 loss가 발산하거나 진동하고, 너무 작으면 수렴이 지나치게 느리다. step decay는 지정 epoch에서 계단식으로, cosine schedule은 곡선을 따라 매끄럽게 학습률을 줄인다. 곡선이 멈춘 것처럼 보이면 초기화, 학습률, 모델 용량, 정규화 강도를 함께 점검한다.</p>
+
+    <h3>전이학습</h3>
+    <ol>
+      <li>사전학습 모델과 동일한 입력 크기·채널 순서·정규화 통계를 적용한다.</li>
+      <li><b>Linear probing</b>: backbone을 freeze하고 새 분류 head만 학습해 전이 가능한 특징인지 확인한다.</li>
+      <li><b>Fine-tuning</b>: 낮은 학습률로 일부 또는 전체 backbone을 새 과제에 맞게 조정한다.</li>
+      <li>label을 보존하는 augmentation과 learning-rate scheduler를 적용한다.</li>
+      <li>validation으로 설정을 선택하고 test는 최종 평가에만 사용한다.</li>
     </ol>
   </section>
 

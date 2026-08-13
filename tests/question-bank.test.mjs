@@ -31,14 +31,16 @@ const categories = new Set([
   "회귀·신경망",
   "NLP·Transformer",
   "LLM·평가·안전",
+  "CNN·이미지 모델",
+  "ViT·학습 전략",
 ]);
 const kinds = new Set(["객관식", "단답형", "서술형"]);
 const difficulties = new Set(["기초", "핵심", "사고형", "고난도"]);
 
-test("168개 변형 문항과 7개 영역이 모두 있다", () => {
-  assert.equal(questionBank.length, 168);
+test("216개 변형 문항과 9개 영역이 모두 있다", () => {
+  assert.equal(questionBank.length, 216);
   assert.deepEqual(new Set(questionBank.map((question) => question.category)), categories);
-  assert.equal(new Set(questionBank.map((question) => question.id)).size, 168);
+  assert.equal(new Set(questionBank.map((question) => question.id)).size, 216);
   for (const category of categories) {
     assert.equal(questionBank.filter((question) => question.category === category).length, 24,
       `${category}: 영역별 24문항이 아님`);
@@ -46,7 +48,7 @@ test("168개 변형 문항과 7개 영역이 모두 있다", () => {
 });
 
 test("모든 영역의 보강 문항 21~24가 포함된다", () => {
-  for (const prefix of ["py", "np", "viz", "ml", "nn", "nlp", "llm"]) {
+  for (const prefix of ["py", "np", "viz", "ml", "nn", "nlp", "llm", "cnn", "vit"]) {
     for (const number of [21, 22, 23, 24]) {
       assert.ok(questionBank.some((question) => question.id === `${prefix}-${number}`),
         `${prefix}-${number}: 보강 문항 누락`);
