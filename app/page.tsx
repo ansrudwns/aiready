@@ -2048,7 +2048,7 @@ export default function Home() {
         : false;
     const canReveal =
       question.kind === "서술형"
-        ? currentAnswer.trim().length >= 100
+        ? true
         : Boolean(currentAnswer.trim());
     const answeredCount = Object.values(answers).filter((answer) => answer.trim()).length;
     return (
@@ -2123,9 +2123,9 @@ export default function Home() {
                       [question.id]: event.target.value,
                     }))
                   }
-                  placeholder="문제에서 요구한 핵심 개념, 결과와 이유를 100자 이상으로 작성하세요."
+                  placeholder="생각한 답안을 자유롭게 작성하거나 바로 모범답안을 확인하세요."
                 />
-                <span>{(answers[question.id] ?? "").trim().length}자 작성 · 시험 답안 기준 100자 이상</span>
+                <span>{(answers[question.id] ?? "").trim().length}자 작성 · 모범답안 확인에 글자 수 제한 없음</span>
               </div>
             ) : question.answer.includes("\n") ? (
               <div className="answer-field">
