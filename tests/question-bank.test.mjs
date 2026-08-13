@@ -78,11 +78,13 @@ test("객관식은 중복 없는 4개 보기와 정확히 하나의 정답을 �
   }
 });
 
-test("서술형 모범답안은 시험 기준대로 100자 이상이다", () => {
+test("서술형 지문에는 글자 수 조건이 없고 모범답안은 충분히 구체적이다", () => {
   const essays = questionBank.filter((question) => question.kind === "서술형");
   assert.ok(essays.length >= 7);
   for (const question of essays) {
-    assert.ok(question.answer.trim().length >= 100, `${question.id}: 100자 미만`);
+    assert.doesNotMatch(question.question, /100자|글자 수/,
+      `${question.id}: 지문에 글자 수 조건이 남음`);
+    assert.ok(question.answer.trim().length >= 100, `${question.id}: 모범답안이 지나치게 짧음`);
     assert.equal(question.choices, undefined);
   }
 });
