@@ -2055,10 +2055,10 @@ export default function Home() {
       <main className="exam-shell">
         <header className="exam-header">
           <button className="brand small" onClick={() => setView("home")}>
-            <span>AI</span>평가연습
+            <span>AI</span>ready
           </button>
           <div className="exam-title">
-            <strong>AI·Python 과목평가 연습</strong>
+            <strong>AIready</strong>
             <span>
               {answeredCount}/{questions.length} 답안 작성
             </span>
@@ -2125,7 +2125,6 @@ export default function Home() {
                   }
                   placeholder="생각한 답안을 자유롭게 작성하거나 바로 모범답안을 확인하세요."
                 />
-                <span>{(answers[question.id] ?? "").trim().length}자 작성 · 모범답안 확인에 글자 수 제한 없음</span>
               </div>
             ) : question.answer.includes("\n") ? (
               <div className="answer-field">
@@ -2299,7 +2298,7 @@ export default function Home() {
       <main className="result-page">
         <header className="simple-header">
           <button className="brand small" onClick={() => setView("home")}>
-            <span>AI</span>평가연습
+            <span>AI</span>ready
           </button>
           <button className="text-button" onClick={() => setView("home")}>
             대시보드로 돌아가기
@@ -2443,7 +2442,7 @@ export default function Home() {
   return (
     <main>
       <header className="home-header">
-        <div className="brand"><span>AI</span>평가연습</div>
+        <div className="brand"><span>AI</span>ready</div>
         <span className="local-save-status">오답·북마크 자동 저장</span>
       </header>
 
@@ -2451,7 +2450,7 @@ export default function Home() {
         <div className="section-heading">
           <div>
             <span className="section-kicker">문제은행 · {questionBank.length}문항</span>
-            <h2>AI·Python 과목평가 연습</h2>
+            <h2>AIready</h2>
           </div>
           <div className="section-meta">
             <time dateTime="2026-08-01">문서 기반 변형 문항</time>
