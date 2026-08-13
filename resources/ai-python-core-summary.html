@@ -64,7 +64,7 @@
     <div class="bands" aria-hidden="true">
       <i style="background:#ef8354"></i><i style="background:#3a86ff"></i><i style="background:#06a77d"></i><i style="background:#8b5cf6"></i><i style="background:#e4a11b"></i><i style="background:#e5526b"></i><i style="background:#526477"></i>
     </div>
-    <div class="meta"><span>140문항 연계 범위</span><span>2026.08</span></div>
+    <div class="meta"><span>168문항 연계 범위</span><span>2026.08</span></div>
   </section>
 
   <section class="toc">
@@ -129,6 +129,7 @@ copy = sorted(values, reverse=True)
       <div class="card"><h4>반복 범위</h4><p><code>range(start, stop, step)</code> 역시 stop을 포함하지 않는다. <code>continue</code>는 현재 회차의 남은 코드를 건너뛰고, <code>break</code>는 반복을 즉시 끝낸다.</p></div>
       <div class="card"><h4>for–else</h4><p>반복이 <code>break</code> 없이 정상 종료되면 <code>else</code>가 실행된다. 검색 성공 시 break, 끝까지 실패한 경우 else를 사용하는 패턴이 대표적이다.</p></div>
     </div>
+    <p><code>enumerate(iterable)</code>는 원소와 index를 함께 순회한다. 기본 index는 0부터 시작하며 <code>enumerate(items, start=1)</code>처럼 시작 번호를 지정할 수 있다.</p>
     <pre>for item in items:
     if not is_valid(item):
         continue
@@ -470,6 +471,7 @@ matrix = df.pivot_table(
     <div class="formula">CV(K) = Σ<sub>k=1</sub><sup>K</sup> (n<sub>k</sub>/n) MSE<sub>k</sub><br>MSE<sub>k</sub> = (1/n<sub>k</sub>) Σ<sub>i∈Cₖ</sub>(y<sub>i</sub>−ŷ<sub>i</sub>)²</div>
     <ul>
       <li>각 fold는 정확히 한 번 validation 역할을 한다.</li>
+      <li>서로 다른 fold는 겹치지 않고, 모든 fold의 합집합은 전체 표본을 이룬다.</li>
       <li>fold 크기가 다르면 <code>n_k/n</code>으로 가중해 관측치 비중을 맞춘다.</li>
       <li><code>K=n</code>이면 LOOCV이며 학습 횟수가 많아 계산비용이 크다.</li>
       <li>분류는 class 비율을 유지하는 stratification, 시계열은 시간 순서를 지키는 분할이 필요하다.</li>
@@ -482,6 +484,7 @@ matrix = df.pivot_table(
     </div>
     <div class="formula">C₁ ∪ ··· ∪ C<sub>K</sub> = {1,…,n}, &nbsp; C<sub>k</sub> ∩ C<sub>k′</sub> = ∅ &nbsp;(k≠k′)</div>
     <p>군집 색상·번호 자체에는 의미가 없다. Euclidean 거리 기반 방법은 scale에 민감하므로 StandardScaler 등으로 단위를 맞춘다. 거리, linkage, 초기화, K를 바꿔 안정성과 도메인 해석 가능성을 함께 확인한다.</p>
+    <div class="warning"><b>범주 정수 인코딩</b>: 순서가 없는 범주를 맑음=1, 눈=2, 비=3처럼 넣으면 존재하지 않는 크기와 거리 관계가 생긴다. 명목형 범주는 one-hot 등 모델과 목적에 맞는 표현을 선택한다.</div>
   </section>
 
   <section class="chapter">
@@ -497,7 +500,7 @@ matrix = df.pivot_table(
       <li>잔차 <code>e_i=y_i−ŷ_i</code>, RSS는 잔차 제곱합이다.</li>
     </ul>
     <div class="formula">β̂₁ = Σ(x<sub>i</sub>−x̄)(y<sub>i</sub>−ȳ) / Σ(x<sub>i</sub>−x̄)² &nbsp;=&nbsp; Cov(x,y)/Var(x)<br>β̂₀ = ȳ − β̂₁x̄</div>
-    <p>다중회귀는 <code>y=Xβ+ε</code>로 표현한다. 다른 feature를 고정했을 때 한 feature의 계수를 부분 효과로 해석하지만, 높은 상관·상호작용·비선형성·인과 혼동을 별도로 고려한다.</p>
+    <p>다중회귀는 <code>y=Xβ+ε</code>로 표현한다. 다른 feature를 고정했을 때 한 feature의 계수를 부분 효과로 해석하지만, 높은 상관·상호작용·비선형성·인과 혼동을 별도로 고려한다. 설명변수 사이의 강한 다중공선성은 계수 분산을 키워 크기·부호·개별 효과 해석을 불안정하게 만들 수 있다.</p>
 
     <h3>정규방정식과 최소제곱</h3>
     <div class="formula">RSS(β) = ‖y−Xβ‖²<br>∂RSS/∂β = −2Xᵀ(y−Xβ) = 0<br>β̂ = (XᵀX)⁻¹Xᵀy</div>
@@ -522,7 +525,7 @@ matrix = df.pivot_table(
     <h3>로지스틱 회귀</h3>
     <div class="formula">z = β₀ + xᵀβ &nbsp;&nbsp;·&nbsp;&nbsp; σ(z)=1/(1+e<sup>−z</sup>) &nbsp;&nbsp;·&nbsp;&nbsp; p(y=1|x)=σ(z)</div>
     <div class="formula">log(p/(1−p)) = β₀ + xᵀβ<small>계수 β_j는 x_j가 1 증가할 때 log-odds 변화, exp(β_j)는 odds ratio</small></div>
-    <p>sigmoid 출력은 0과 1 사이의 확률이며 threshold를 적용해 class로 변환한다. threshold는 오류 비용에 맞춰 조정하며 0.5가 항상 최선은 아니다.</p>
+    <p>유한한 입력에서 sigmoid 출력은 열린구간 <code>(0,1)</code>의 확률이며 threshold를 적용해 class로 변환한다. threshold는 오류 비용에 맞춰 조정하며 0.5가 항상 최선은 아니다. 양끝 포화 구간에서는 미분값이 매우 작아 깊은 망에서 기울기 소실을 일으킬 수 있다.</p>
     <div class="formula">Binary Cross-Entropy = −[y log p + (1−y) log(1−p)]</div>
     <p>다중분류 softmax 출력에는 <code>−Σ_c y_c log p_c</code>를 사용한다. one-hot label에서는 정답 class 항만 남아 <code>−log p_true</code>가 된다.</p>
 
@@ -534,8 +537,8 @@ matrix = df.pivot_table(
       <tr><td>hidden layer</td><td>중간 표현 생성</td></tr>
       <tr><td>output layer</td><td>회귀값, logit, class 확률 등 작업에 맞는 출력</td></tr>
     </tbody></table>
-    <div class="formula">ReLU(z) = max(0,z)</div>
-    <p>ReLU 네트워크는 입력 공간을 여러 선형 영역으로 나눈 piecewise linear 함수를 만든다. 깊은 구조는 앞 층의 영역을 뒤 층에서 조합하여 비슷한 파라미터 수로도 더 많은 영역을 효율적으로 표현할 수 있다.</p>
+    <div class="formula">ReLU(z) = max(0,z) &nbsp;&nbsp;·&nbsp;&nbsp; LeakyReLU(z) = z (z≥0), αz (z&lt;0)</div>
+    <p>ReLU 네트워크는 입력 공간을 여러 선형 영역으로 나눈 piecewise linear 함수를 만든다. Leaky ReLU는 음수 구간에 작은 기울기 α를 남겨 unit의 gradient가 완전히 0이 되는 현상을 완화한다. 깊은 구조는 앞 층의 영역을 뒤 층에서 조합하여 비슷한 파라미터 수로도 더 많은 영역을 효율적으로 표현할 수 있지만 최적화와 일반화를 자동으로 보장하지 않는다.</p>
 
     <h3>shape와 파라미터 수</h3>
     <p>입력 차원 <code>d_in</code>, 출력 차원 <code>d_out</code>인 fully connected layer의 weight는 <code>(d_in, d_out)</code>, bias는 <code>(d_out,)</code>로 볼 수 있다. 파라미터 수는 다음과 같다.</p>
@@ -550,6 +553,7 @@ matrix = df.pivot_table(
       <tr><td>mini-batch</td><td>일부 표본 묶음</td><td>벡터 연산 효율과 적당한 gradient 잡음의 균형</td></tr>
     </tbody></table>
     <p>학습률이 너무 크면 최솟값 주변을 건너뛰어 손실이 진동·발산할 수 있고, 너무 작으면 수렴이 느리다. batch 크기, 초기화, 정규화, optimizer 설정과 함께 관찰한다.</p>
+    <p><b>Hyperparameter 탐색</b>: Grid Search는 미리 정한 후보 조합을 체계적으로 검사하고, Random Search는 탐색 분포에서 제한된 횟수만큼 조합을 추출한다. 선택에는 validation 또는 CV를 사용하고 test는 최종 평가에 남긴다.</p>
 
     <h3>계산 그래프와 역전파</h3>
     <ol>
@@ -614,7 +618,10 @@ for x, y in loader:
       <tr><td>CBOW</td><td>주변 단어들 → 중심 단어</td></tr>
       <tr><td>Skip-gram</td><td>중심 단어 → 주변 단어들</td></tr>
     </tbody></table>
-    <p>window 안의 동시출현 패턴으로 embedding을 학습한다. 계산량을 줄이기 위해 negative sampling처럼 일부 오답 단어만 사용하는 근사가 활용된다. 정적 embedding은 같은 단어가 문맥에 관계없이 하나의 벡터를 갖는 한계가 있다.</p>
+    <p><b>분포 가설</b>은 비슷한 문맥에 등장하는 단어가 비슷한 의미를 가질 가능성이 높다는 생각이다. Word2Vec은 window 안의 동시출현 패턴으로 embedding을 학습한다. 계산량을 줄이기 위해 negative sampling처럼 일부 오답 단어만 사용하는 근사가 활용된다. 정적 embedding은 같은 단어가 문맥에 관계없이 하나의 벡터를 갖는 한계가 있다.</p>
+
+    <h3>N-gram 언어모델</h3>
+    <p>N-gram은 다음 단어 확률을 직전 <code>N-1</code>개 단어의 빈도로 근사한다. 구조가 단순하지만 고정된 짧은 문맥만 사용하며, N이 커질수록 가능한 조합이 급증해 보지 못한 문맥의 희소성 문제가 커진다. smoothing은 0 확률을 완화하지만 긴 거리 의존성을 직접 해결하지는 못한다.</p>
 
     <h3>RNN과 BPTT</h3>
     <div class="formula">h<sub>t</sub> = tanh(W<sub>xh</sub>x<sub>t</sub> + W<sub>hh</sub>h<sub>t−1</sub> + b<sub>h</sub>)<br>ŷ<sub>t</sub> = g(W<sub>hy</sub>h<sub>t</sub> + b<sub>y</sub>)</div>
@@ -662,7 +669,7 @@ for x, y in loader:
       <li>위치별 feed-forward network</li>
       <li>residual connection + layer normalization</li>
     </ol>
-    <p>모든 위치가 직접 연결되어 장거리 정보 경로가 짧고 sequence 방향 병렬 학습이 가능하다. 표준 self-attention의 score 행렬은 길이 N에 대해 메모리·계산이 일반적으로 O(N²)로 증가한다.</p>
+    <p>residual connection은 sublayer 입력을 출력에 더하는 우회 경로를 만들어 정보와 gradient 흐름을 돕는다. 모든 위치가 직접 연결되어 장거리 정보 경로가 짧고 sequence 방향 병렬 학습이 가능하다. 표준 self-attention의 score 행렬은 길이 N에 대해 메모리·계산이 일반적으로 O(N²)로 증가한다.</p>
 
     <h3>Encoder · Decoder · Mask</h3>
     <table><thead><tr><th>구조</th><th>attention 범위</th><th>대표 용도</th></tr></thead><tbody>
@@ -747,6 +754,7 @@ for x, y in loader:
     <p>Agent에는 허용 도구 목록, 인자 schema, 읽기·쓰기 권한 분리, 최대 반복 수, 비용 상한, 중요 작업의 사람 승인과 audit log가 필요하다.</p>
 
     <h3>언어모델 평가</h3>
+    <p>평가 설계는 <b>대표성 있는 평가 데이터</b>, <b>목적에 맞는 지표</b>, <b>재현 가능한 프로토콜</b>을 함께 정의한다. prompt, decoding, 채점 기준, 모델 버전이 달라지면 같은 지표도 직접 비교하기 어렵다.</p>
     <div class="formula">NLL = −(1/T)Σ<sub>t=1</sub><sup>T</sup> log p(x<sub>t</sub>|x<sub>&lt;t</sub>) &nbsp;&nbsp;·&nbsp;&nbsp; Perplexity = exp(NLL)</div>
     <p>perplexity가 낮으면 정답 token sequence에 더 높은 확률을 부여했다는 뜻이다. 사실성·유용성·안전·편향을 직접 평가하지는 않는다.</p>
     <table><thead><tr><th>층위</th><th>대표 지표·방법</th><th>제한</th></tr></thead><tbody>
@@ -777,6 +785,7 @@ for x, y in loader:
       <div class="card"><h4>유해성</h4><p>공격적·위험한 내용, 개인정보 노출, 보안 취약 행동, 차별적 결과 등 사용 맥락의 피해 가능성.</p></div>
       <div class="card"><h4>과신·자동화 편향</h4><p>사용자가 유창한 응답을 검증 없이 신뢰하거나 시스템이 사람 판단을 대체하면서 오류 영향이 확대되는 문제.</p></div>
     </div>
+    <p><b>Jailbreaking</b>은 역할극, 인코딩, 다단계 지시 등으로 모델의 안전 제약을 우회하도록 유도하는 공격이다. 단일 system prompt만으로 완전히 차단할 수 없으며 입력과 지시의 분리, 최소 도구 권한, 출력 검증, 공격 테스트와 운영 모니터링을 겹쳐 적용한다.</p>
     <ol>
       <li>권한이 통제된 신뢰 가능한 지식 검색</li>
       <li>응답 근거와 불확실성 표현</li>

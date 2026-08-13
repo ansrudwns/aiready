@@ -34,4 +34,8 @@ test("PDF 원고는 7개 영역을 포함하고 자료 식별자를 노출하지
   for (const forbidden of ["AI_Machine_Learning", "1-1_AI", "1-2_AI", "2-1_", "2-2_", "참고문헌", "출처:"]) {
     assert.equal(html.includes(forbidden), false, `${forbidden}: 자료 식별자 노출`);
   }
+  assert.ok(html.includes("168문항 연계 범위"), "문제은행 문항 수와 PDF 표지가 불일치");
+  for (const concept of ["enumerate(iterable)", "다중공선성", "LeakyReLU", "N-gram 언어모델", "Jailbreaking", "재현 가능한 프로토콜"]) {
+    assert.ok(html.includes(concept), `${concept}: 보강 개념 누락`);
+  }
 });
