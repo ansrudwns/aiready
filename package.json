@@ -7,7 +7,9 @@
   },
   "scripts": {
     "dev": "vinext dev",
+    "dev:pages": "vite --config vite.pages.config.ts",
     "build": "vinext build",
+    "build:pages": "vite build --config vite.pages.config.ts",
     "start": "vinext start",
     "test": "node --test tests/grading.test.mjs tests/question-bank.test.mjs tests/pdf-asset.test.mjs tests/essay-reveal.test.mjs tests/site-title.test.mjs && npm run build",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",

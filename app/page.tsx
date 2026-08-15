@@ -2505,7 +2505,7 @@ export default function Home() {
 
         <a
           className="summary-resource-banner"
-          href="/ai-python-core-summary.pdf"
+          href={`${import.meta.env.BASE_URL}ai-python-core-summary.pdf`}
           download="AI_Python_핵심정리.pdf"
         >
           <span className="summary-resource-icon">PDF</span>
