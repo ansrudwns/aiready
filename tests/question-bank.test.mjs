@@ -8,7 +8,7 @@ async function loadQuestionBank() {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   const result = await build({
     stdin: {
-      contents: `${source}\nexport { questionBank };`,
+      contents: `${source}\nexport { questionBank, rawPracticeQuestionBank };`,
       loader: "tsx",
       resolveDir: fileURLToPath(new URL("../app", import.meta.url)),
       sourcefile: "page.tsx",
@@ -19,10 +19,10 @@ async function loadQuestionBank() {
     write: false,
   });
   const moduleUrl = `data:text/javascript;base64,${Buffer.from(result.outputFiles[0].contents).toString("base64")}`;
-  return (await import(moduleUrl)).questionBank;
+  return await import(moduleUrl);
 }
 
-const questionBank = await loadQuestionBank();
+const { questionBank, rawPracticeQuestionBank } = await loadQuestionBank();
 const pageUrl = new URL("../app/page.tsx", import.meta.url);
 const categories = new Set([
   "Python·API·JSON",
@@ -40,6 +40,25 @@ test("초기 출제 범위는 AI 영역 6개만 선택한다", async () => {
   const page = await readFile(pageUrl, "utf8");
   assert.match(page, /const defaultCategories: Category\[\] = categories\.slice\(3\);/);
   assert.match(page, /useState<Category\[\]>\(defaultCategories\)/);
+});
+
+test("기본 활성화 AI 6개 영역은 모든 유형에 상세 해설을 제공한다", () => {
+  const activeCategories = new Set([...categories].slice(3));
+  const activeQuestions = questionBank.filter((question) => activeCategories.has(question.category));
+  const inactiveQuestions = questionBank.filter((question) => !activeCategories.has(question.category));
+  assert.equal(activeQuestions.length, 144);
+  assert.equal(inactiveQuestions.length, 72);
+  assert.deepEqual(new Set(activeQuestions.map((question) => question.kind)), new Set(["객관식", "단답형", "서술형"]));
+  for (const question of activeQuestions) {
+    for (const heading of ["정답과 직접 근거", "풀이 과정", "핵심 개념", "헷갈리기 쉬운 점"]) {
+      assert.match(question.explanation, new RegExp(heading), `${question.id}: ${heading} 누락`);
+    }
+    assert.ok(question.explanation.length >= 400, `${question.id}: 상세 해설이 충분하지 않음`);
+  }
+  for (const question of inactiveQuestions) {
+    assert.doesNotMatch(question.explanation, /정답과 직접 근거|풀이 과정|헷갈리기 쉬운 점/,
+      `${question.id}: 기본 비활성화 영역이 상세 해설 대상에 포함됨`);
+  }
 });
 const kinds = new Set(["객관식", "단답형", "서술형"]);
 const difficulties = new Set(["기초", "핵심", "사고형", "고난도"]);
@@ -114,7 +133,7 @@ test("같은 영역 안에서 문항 내용이 과도하게 겹치지 않는다"
       .filter((term) => term.length > 1 && !stopWords.has(term)),
   );
   for (const category of categories) {
-    const items = questionBank.filter((question) => question.category === category);
+    const items = rawPracticeQuestionBank.filter((question) => question.category === category);
     for (let i = 0; i < items.length; i += 1) {
       for (let j = i + 1; j < items.length; j += 1) {
         const left = terms(items[i]);

@@ -1570,7 +1570,130 @@ const Q = (
   return { id, category, kind, difficulty, question, answer, explanation, code, choices };
 };
 
-const questionBank: Question[] = [
+type ExplanationGuide = {
+  category: Category;
+  pattern: RegExp;
+  concept: string;
+  caution: string;
+};
+
+const detailedExplanationCategories = new Set<Category>(categories.slice(3));
+
+const categoryExplanationFallback: Partial<Record<Category, Pick<ExplanationGuide, "concept" | "caution">>> = {
+  "ML 기초·검증": {
+    concept: "머신러닝 문제는 데이터의 역할, 학습 목표, 평가 지표를 분리해서 보면 이해하기 쉽습니다. 훈련 데이터는 파라미터 학습, validation 데이터는 모델 선택, test 데이터는 최종 일반화 성능 확인에 사용합니다.",
+    caution: "훈련 성능이 좋다는 사실만으로 새 데이터에서도 좋다고 결론 내리면 안 됩니다. 문제 유형과 데이터 분포에 맞는 지표를 고르고, 전처리와 모델 선택이 test 정보에 영향을 받지 않았는지 확인해야 합니다.",
+  },
+  "회귀·신경망": {
+    concept: "입력에서 예측값을 계산하는 순전파, 예측과 정답의 차이를 수치화하는 손실, 연쇄법칙으로 gradient를 구하는 역전파, 파라미터를 갱신하는 optimizer를 하나의 흐름으로 연결해 보세요.",
+    caution: "수식은 기호만 외우기보다 각 항의 shape와 역할을 확인해야 합니다. loss 계산과 파라미터 갱신은 다른 단계이며, 평가 단계에서는 gradient 계산과 파라미터 변경을 수행하지 않습니다.",
+  },
+  "NLP·Transformer": {
+    concept: "텍스트는 token과 id로 변환된 뒤 embedding을 거쳐 벡터 시퀀스가 됩니다. 이후 모델은 문맥 표현을 만들고, 목적에 따라 분류·복원·다음 token 예측 등의 출력과 loss를 계산합니다.",
+    caution: "모델 구조, attention의 정보 출처, mask의 목적, 사전학습 목표를 서로 섞지 마세요. 같은 Transformer라도 encoder-only, decoder-only, encoder-decoder는 볼 수 있는 문맥과 적합한 작업이 다릅니다.",
+  },
+  "LLM·평가·안전": {
+    concept: "LLM 시스템은 사전학습 목표, 지시 적응, 디코딩, 외부 지식 연결, 평가와 안전 통제를 분리해서 이해해야 합니다. 한 단계의 성능이 좋아도 전체 시스템의 사실성이나 안전성이 자동으로 보장되지는 않습니다.",
+    caution: "perplexity나 자동 지표 하나를 전체 품질로 해석하지 마세요. 실제 목적에 맞는 데이터와 지표, 고정된 평가 절차, 사람 검토 및 운영상 권한 제한을 함께 설계해야 합니다.",
+  },
+  "CNN·이미지 모델": {
+    concept: "CNN은 국소 연결과 가중치 공유로 공간 패턴을 효율적으로 학습합니다. 문제를 풀 때는 입력과 출력의 N·C·H·W, 커널 크기, stride, padding, 채널 수를 먼저 표시하면 shape와 계산량을 안정적으로 추적할 수 있습니다.",
+    caution: "파라미터 수, activation memory, FLOPs는 서로 다른 양입니다. 공간 크기를 줄이면 계산량은 감소하지만 세밀한 위치 정보가 손실될 수 있고, 층이 깊어지면 수용영역과 특징의 추상성이 함께 커집니다.",
+  },
+  "ViT·학습 전략": {
+    concept: "ViT는 이미지를 patch token으로 바꾸고 위치 정보를 더한 뒤 self-attention으로 patch 사이 관계를 학습합니다. 구조 자체와 초기화·정규화·증강·학습률 같은 훈련 전략을 구분해 이해하세요.",
+    caution: "학습 기법은 항상 같은 효과를 내는 만능 규칙이 아닙니다. 데이터 크기, 사전학습 조건, train/validation 곡선과 입력 전처리를 함께 보고 선택하며 test set은 최종 확인 전까지 분리해야 합니다.",
+  },
+};
+
+const explanationGuides: ExplanationGuide[] = [
+  { category: "ML 기초·검증", pattern: /Precision|Recall|F1|정확도|혼동행렬|TP|FP|FN|TN/, concept: "혼동행렬은 실제 class와 예측 class의 조합을 TP·FP·FN·TN으로 나눕니다. Precision은 양성이라고 예측한 것 중 실제 양성의 비율이고, Recall은 실제 양성 중 찾아낸 비율입니다.", caution: "불균형 데이터에서는 다수 class만 맞혀도 accuracy가 높을 수 있습니다. FP 비용과 FN 비용 중 무엇이 더 큰지 먼저 판단한 뒤 precision, recall, specificity, F1 등을 선택해야 합니다." },
+  { category: "ML 기초·검증", pattern: /validation|test|hold-out|K-fold|LOOCV|fold|과적합|과소적합|일반화/, concept: "일반화 성능은 학습에 사용하지 않은 데이터에서 측정합니다. K-fold는 각 fold를 한 번씩 validation으로 사용하고 결과를 합쳐 단일 hold-out 분할의 우연성을 줄입니다.", caution: "validation으로 반복 선택한 모델을 같은 validation 점수만으로 최종 성능이라고 보고하면 낙관적 편향이 생깁니다. test set은 모든 선택이 끝난 뒤 한 번 사용하는 것이 원칙입니다." },
+  { category: "ML 기초·검증", pattern: /MSE|RMSE|R²|오차/, concept: "MSE는 잔차 제곱의 평균이고 RMSE는 그 제곱근이므로 목표값과 같은 단위로 해석할 수 있습니다. R²는 평균 예측을 기준으로 모델이 상대적으로 얼마나 변동을 설명했는지 나타냅니다.", caution: "MSE와 RMSE는 절대 오차 규모, R²는 baseline 대비 상대 성능을 말합니다. test R²는 음수가 될 수 있으며, 이는 평균으로 예측하는 단순 기준보다도 성능이 나쁘다는 뜻입니다." },
+  { category: "ML 기초·검증", pattern: /K-means|군집|StandardScaler|비지도|계층/, concept: "군집화는 label 없이 거리나 유사성을 기준으로 구조를 찾습니다. K-means는 중심과 할당을 반복하고, 응집형 계층 군집은 가까운 군집을 차례로 병합해 덴드로그램을 만듭니다.", caution: "거리 기반 결과는 feature scale, 거리 정의, 초기값과 linkage에 민감합니다. 군집 번호 자체에는 의미가 없으므로 안정성, 분리 정도와 도메인 해석을 함께 확인해야 합니다." },
+  { category: "ML 기초·검증", pattern: /feature|label|지도|분류|회귀|상관|명목형|one-hot|ε/, concept: "지도학습은 feature X에서 label Y를 예측하는 관계를 학습합니다. 회귀는 연속값, 분류는 범주를 예측하며 범주형 입력은 모델이 임의의 크기 순서로 해석하지 않도록 적절히 인코딩해야 합니다.", caution: "상관관계만으로 인과관계를 단정할 수 없고, 관측되지 않은 교란 요인과 측정오차가 있을 수 있습니다. 데이터 표현이 실제 의미와 일치하는지 먼저 확인하세요." },
+
+  { category: "회귀·신경망", pattern: /선형회귀|회귀계수|최소제곱|정규방정식|다중공선성|RSE|t 통계량/, concept: "선형회귀는 입력의 선형결합으로 조건부 평균을 근사하고 잔차 제곱합을 최소화해 계수를 추정합니다. 표준오차와 t 통계량은 추정치가 표본 변화에 얼마나 민감한지 판단하는 데 사용합니다.", caution: "큰 계수나 높은 R²만으로 변수의 인과적 중요성을 결론 내리면 안 됩니다. 다중공선성이 강하면 예측은 가능해도 개별 계수와 유의성 해석이 불안정해질 수 있습니다." },
+  { category: "회귀·신경망", pattern: /로지스틱|sigmoid|softmax|교차엔트로피|one-hot/, concept: "로지스틱 회귀는 선형 점수를 sigmoid로 변환해 이진 class 확률을 만듭니다. 다중분류에서는 softmax가 class별 확률을 만들고 one-hot 정답의 교차엔트로피는 정답 class 확률의 -log 값으로 줄어듭니다.", caution: "모델 이름에 회귀가 들어가도 로지스틱 회귀의 기본 용도는 분류입니다. 확률과 최종 class는 같지 않으며 threshold 또는 argmax 같은 결정 규칙이 추가로 필요합니다." },
+  { category: "회귀·신경망", pattern: /ReLU|Leaky|활성화|깊이|표현력|sigmoid/, concept: "활성화 함수는 선형층 사이에 비선형성을 넣어 복잡한 함수를 표현하게 합니다. ReLU는 양수에서 기울기 1, 음수에서 0이며 Leaky ReLU는 음수 구간에도 작은 기울기를 남깁니다.", caution: "활성화 없이 선형층만 여러 개 쌓으면 전체가 하나의 선형변환과 같습니다. sigmoid 반복은 포화 구간의 작은 미분값 때문에 깊은 층에서 기울기 소실을 일으킬 수 있습니다." },
+  { category: "회귀·신경망", pattern: /gradient|경사하강|mini-batch|full-batch|학습률|optimizer|Grid Search|Random Search/, concept: "경사하강법은 현재 손실의 gradient 반대 방향으로 파라미터를 이동합니다. Mini-batch는 전체 데이터 gradient의 근사값을 사용해 메모리와 계산 효율을 얻는 대신 update에 잡음이 생깁니다.", caution: "학습률이 너무 크면 최솟값을 지나쳐 진동하거나 발산하고, 너무 작으면 수렴이 지나치게 느립니다. 탐색 결과는 validation으로 비교하고 test를 하이퍼파라미터 선택에 사용하지 않습니다." },
+  { category: "회귀·신경망", pattern: /역전파|계산 그래프|연쇄법칙|PyTorch|nn\.Module|forward|zero_grad|backward|step|shape|파라미터 수/, concept: "순전파가 계산 그래프와 손실을 만들면 역전파는 출력에서 입력 방향으로 국소 미분을 곱해 각 파라미터의 gradient를 구합니다. PyTorch에서는 gradient 초기화, 순전파, loss, backward, optimizer step 순서를 지킵니다.", caution: "행렬곱은 안쪽 차원이 같아야 하며 bias도 학습 파라미터에 포함됩니다. 이전 batch의 gradient가 누적되지 않도록 zero_grad를 수행하고, backward와 step의 역할을 구분하세요." },
+
+  { category: "NLP·Transformer", pattern: /one-hot|embedding|Skip-gram|CBOW|분포 가설|subword|tokenization|어휘 크기/, concept: "One-hot은 단어 사이 유사성을 표현하지 못하지만 embedding은 학습 가능한 밀집 벡터로 의미·문맥 관계를 담을 수 있습니다. CBOW는 주변 문맥으로 중심 단어를, Skip-gram은 중심 단어로 주변 단어를 예측합니다.", caution: "embedding 행렬의 첫 차원은 어휘 크기 V, 둘째는 벡터 차원 d입니다. Subword는 희귀어를 조각으로 표현해 OOV를 줄이지만 token 수가 늘어날 수 있습니다." },
+  { category: "NLP·Transformer", pattern: /RNN|LSTM|GRU|hidden|gradient|장기 의존성/, concept: "RNN은 이전 hidden state와 현재 입력을 결합해 순차적으로 상태를 갱신합니다. LSTM과 GRU의 gate는 어떤 정보를 유지·갱신할지 조절해 기본 RNN의 장기 의존성 학습을 돕습니다.", caution: "시간축으로 같은 변환과 미분이 반복되면 gradient가 매우 작아지거나 커질 수 있습니다. Gate가 문제를 완전히 제거하는 것은 아니며 긴 시퀀스의 순차 계산 비용도 남습니다." },
+  { category: "NLP·Transformer", pattern: /Seq2Seq|teacher forcing|encoder-decoder|cross-attention|attention이 필요한/, concept: "Encoder-decoder 구조는 입력을 표현으로 바꾸고 decoder가 출력을 순차 생성합니다. Attention은 매 출력 시점에 encoder의 여러 위치를 다시 조회해 하나의 고정 벡터에 모든 정보를 압축하는 병목을 줄입니다.", caution: "Teacher forcing은 학습 때 이전 정답 token을 입력하지만 추론 때는 모델의 이전 예측을 사용합니다. 이 차이로 exposure bias가 생길 수 있으며, cross-attention의 Q는 decoder, K와 V는 encoder 출력에서 옵니다." },
+  { category: "NLP·Transformer", pattern: /self-attention|Q, K, V|Scaled|multi-head|causal mask|위치|residual/, concept: "Attention은 Q와 K의 유사도로 가중치를 만들고 그 가중치로 V를 합칩니다. √d_k로 나누면 내적 크기가 커져 softmax가 지나치게 포화되는 현상을 완화하며, 여러 head는 서로 다른 관계를 병렬로 학습합니다.", caution: "Self-attention만으로 token 순서는 자동 표현되지 않아 위치 정보가 필요합니다. Causal mask는 미래 token을 가리고, padding mask는 실제 입력이 아닌 padding 위치의 영향을 막습니다." },
+  { category: "NLP·Transformer", pattern: /BERT|MLM|T5|span corruption|N-gram|Transformer의 시퀀스/, concept: "BERT는 양방향 encoder와 MLM으로 입력 이해 표현을 학습합니다. T5는 손상된 span을 sentinel token으로 바꾸고 decoder가 원문 구간을 복원하는 text-to-text 목표를 사용합니다.", caution: "N-gram은 짧은 고정 문맥과 빈도에 의존해 희소성과 장거리 관계에 약합니다. 사전학습 목표가 다르면 같은 Transformer 계열이라도 사용할 수 있는 문맥과 적합한 작업이 달라집니다." },
+
+  { category: "LLM·평가·안전", pattern: /Foundation|Scaling|emergent|사전학습|자기회귀/, concept: "Foundation model은 대규모 데이터로 넓은 능력을 사전학습한 뒤 여러 작업에 적응합니다. 자기회귀 언어모델은 앞선 token을 조건으로 다음 token의 확률을 높이며, 규모 증가에 따른 성능은 데이터·모델·계산량의 균형에 좌우됩니다.", caution: "규모가 커진다고 모든 능력이 단조롭게 좋아지거나 안전해지는 것은 아닙니다. Emergent ability는 평가 척도와 threshold 때문에 갑자기 나타난 것처럼 보일 수도 있어 연속적인 지표로 재검증해야 합니다." },
+  { category: "LLM·평가·안전", pattern: /SFT|RLHF|Reward|KL|in-context|fine-tuning/, concept: "SFT는 지시-모범응답 쌍으로 원하는 행동을 지도학습하고, reward model은 응답 선호 순서를 학습합니다. RLHF의 policy 단계는 reward를 높이되 기준 모델에서 지나치게 멀어지지 않도록 KL 제약을 사용할 수 있습니다.", caution: "In-context learning은 prompt 안의 예시를 활용할 뿐 weight를 바꾸지 않습니다. Fine-tuning은 파라미터를 갱신하므로 비용과 데이터 품질, 망각과 안전성 변화까지 평가해야 합니다." },
+  { category: "LLM·평가·안전", pattern: /temperature|beam search|top-p|top-k|디코딩/, concept: "Temperature는 확률분포의 평평함을 조절하고, greedy는 매 단계 최고 확률 하나, beam search는 여러 누적 후보를 유지합니다. Top-k는 후보 수를 고정하고 top-p는 누적 확률에 따라 후보 수를 바꿉니다.", caution: "디코딩 전략은 생성 다양성과 안정성을 바꾸지만 사실성을 보장하지 않습니다. 같은 모델도 prompt, seed, temperature와 후보 제한 방식이 달라지면 결과와 평가 점수가 달라질 수 있습니다." },
+  { category: "LLM·평가·안전", pattern: /perplexity|BLEU|ROUGE|Judge|평가|benchmark|cosine|유사도/, concept: "평가 지표는 서로 다른 속성을 측정합니다. Perplexity는 token 확률, BLEU·ROUGE는 기준 문장과의 겹침, embedding 유사도는 벡터 방향의 가까움을 주로 반영합니다.", caution: "자동 지표는 사실성·유용성·안전을 완전히 설명하지 못합니다. 평가 데이터 오염, judge의 위치·길이·자기선호 편향, 표본 대표성과 평가 절차의 재현성을 함께 점검해야 합니다." },
+  { category: "LLM·평가·안전", pattern: /환각|RAG|prompt|jailbreak|안전|사내 지식/, concept: "RAG는 검색된 외부 근거를 생성 context에 넣어 최신성·근거 연결을 돕고, prompt는 역할·입력 경계·제약·출력 형식을 명확히 해야 합니다. 안전은 모델 문구뿐 아니라 도구 권한과 출력 검증까지 포함한 시스템 문제입니다.", caution: "검색 결과가 틀리거나 비어 있으면 RAG도 잘못된 답을 만들 수 있습니다. Jailbreak는 단일 금지 문구로 완전히 막기 어려우므로 최소 권한, 입력 분리, 검증, 모니터링과 공격 평가를 겹쳐 적용해야 합니다." },
+
+  { category: "CNN·이미지 모델", pattern: /출력 너비|출력 공간|파라미터 수|shape|채널 수|비용|비율/, concept: "합성곱 출력 한 축은 floor((입력-커널+2×패딩)/stride)+1로 계산합니다. 가중치 수는 출력채널×입력채널×커널높이×커널너비이며 bias를 쓰면 출력채널 수만큼 더합니다.", caution: "출력 shape 계산과 파라미터 수 계산을 섞지 마세요. 파라미터 수는 보통 입력 이미지의 H·W와 무관하지만 FLOPs와 activation memory는 출력 공간 크기에 크게 영향을 받습니다." },
+  { category: "CNN·이미지 모델", pattern: /국소|가중치 공유|완전연결|ReLU|pooling|해상도|수용영역/, concept: "국소 연결은 가까운 픽셀 패턴을 보고 가중치 공유는 같은 필터를 모든 위치에 적용합니다. 층을 쌓으면 수용영역이 넓어지고 저수준 모서리·질감이 더 추상적인 물체 부분과 형태로 결합됩니다.", caution: "Pooling과 stride는 계산을 줄이고 위치 변화에 강하게 만들 수 있지만 세밀한 좌표 정보를 잃을 수 있습니다. ReLU는 비선형성을 추가할 뿐 공간 크기를 자동으로 줄이지 않습니다." },
+  { category: "CNN·이미지 모델", pattern: /AlexNet|VGG|degradation|ResNet|Residual|bottleneck/, concept: "VGG는 작은 3×3 합성곱을 규칙적으로 쌓고, ResNet은 F(x)+x shortcut으로 깊은 모델의 최적화를 돕습니다. Bottleneck은 1×1 층으로 채널을 조절해 3×3 연산 비용을 줄입니다.", caution: "Degradation은 깊은 plain network의 훈련 오차까지 나빠지는 최적화 문제이므로 일반적인 과적합과 다릅니다. Residual 덧셈 전에는 두 경로의 shape를 맞춰야 합니다." },
+  { category: "CNN·이미지 모델", pattern: /MobileNet|Depthwise|pointwise|separable/, concept: "Depthwise convolution은 입력 채널별로 공간 필터를 적용하고, 1×1 pointwise convolution은 채널 정보를 섞어 출력 채널을 만듭니다. 두 단계를 분리해 standard convolution보다 계산량을 크게 줄입니다.", caution: "Depthwise 단계만으로는 채널 사이 정보를 충분히 결합하지 못합니다. 효율 향상은 채널 수와 공간 크기에 따라 달라지며 실제 속도는 하드웨어 구현의 영향도 받습니다." },
+  { category: "CNN·이미지 모델", pattern: /계산 자원|activation|FLOPs|메모리|효율적인 이유|비교/, concept: "파라미터는 저장할 학습 가중치, activation은 순전파와 역전파 중 보관하는 중간 feature map, FLOPs는 연산량을 나타냅니다. 세 값은 모델의 서로 다른 자원 병목을 설명합니다.", caution: "파라미터가 적다고 항상 빠르거나 메모리를 적게 쓰는 것은 아닙니다. 큰 feature map은 작은 커널이라도 많은 activation과 연산을 만들 수 있으므로 층별 shape를 함께 봐야 합니다." },
+
+  { category: "ViT·학습 전략", pattern: /patch|token 수|Q, K, V|위치|positional|Swin|window|장거리|전역/, concept: "ViT는 H×W 이미지를 P×P patch로 나눠 (H/P)×(W/P)개의 token을 만듭니다. Self-attention은 patch 간 전역 관계를 직접 연결하지만 순서가 없으므로 위치 정보를 별도로 더합니다.", caution: "입력 해상도가 바뀌면 patch 수와 absolute positional embedding 길이가 달라질 수 있습니다. Window attention은 효율적이지만 창 사이 연결이 약해 shifted window 같은 보완이 필요합니다." },
+  { category: "ViT·학습 전략", pattern: /ViT|DeiT|teacher|student|사전학습|linear probing|fine-tuning/, concept: "ViT는 CNN보다 locality 같은 inductive bias가 약해 대규모 사전학습의 이점을 크게 받을 수 있습니다. Linear probing은 backbone을 고정해 특징 품질을 보고, fine-tuning은 일부 또는 전체 weight를 낮은 학습률로 적응시킵니다.", caution: "작은 데이터에서 처음부터 학습하면 과적합이나 불안정성이 커질 수 있습니다. 사전학습 때 사용한 입력 크기·정규화와 새 데이터의 분포 차이를 확인하고 validation으로 적응 범위를 선택해야 합니다." },
+  { category: "ViT·학습 전략", pattern: /활성화|Sigmoid|tanh|ReLU|Leaky|dying/, concept: "비선형 활성화는 여러 선형층의 합성이 하나의 선형변환으로 축약되지 않게 합니다. ReLU는 계산이 단순하지만 음수 영역의 기울기가 0이고, Leaky ReLU는 작은 음수 기울기를 남깁니다.", caution: "Sigmoid와 tanh는 큰 절댓값 입력에서 포화되어 미분값이 0에 가까워질 수 있습니다. 활성화 선택은 초기화와 함께 보아야 하며 모든 층에 무조건 같은 함수가 최선은 아닙니다." },
+  { category: "ViT·학습 전략", pattern: /초기화|Xavier|He|대칭|Residual branch/, concept: "무작위 초기화는 같은 층 뉴런의 대칭을 깨고, Xavier와 He 초기화는 층을 지나는 신호와 gradient의 분산을 안정적으로 유지하려는 방법입니다. He는 ReLU 계열 특성을 고려합니다.", caution: "모든 weight를 0으로 두면 같은 뉴런들이 동일한 gradient를 받아 다른 특징을 배우지 못합니다. Residual branch를 0에 가깝게 시작하는 전략은 전체 block이 identity에 가깝게 시작한다는 별도의 의도입니다." },
+  { category: "ViT·학습 전략", pattern: /L1|L2|Dropout|정규화|augmentation|학습률|Cosine|validation loss|early stopping/, concept: "정규화와 augmentation은 과적합을 줄이고, learning-rate schedule과 early stopping은 최적화 진행을 제어합니다. Dropout은 훈련 중 unit을 확률적으로 끄고 inverted 방식은 살아남은 값을 1/(1-p)로 조정합니다.", caution: "훈련 loss 감소와 validation loss 상승이 함께 나타나면 과적합 신호입니다. 정규화 강도, 증강과 중단 시점은 validation으로 고르고 test 결과를 보며 반복 조정하지 않습니다." },
+];
+
+function expandExplanation(question: Question): string {
+  if (!detailedExplanationCategories.has(question.category)) return question.explanation;
+
+  const searchable = `${question.question} ${question.answer} ${question.explanation}`;
+  const matched = explanationGuides.find(
+    (guide) => guide.category === question.category && guide.pattern.test(searchable),
+  );
+  const guide = matched ?? categoryExplanationFallback[question.category];
+  const answerLead = question.kind === "서술형"
+    ? "모범답안은 결론만 나열하지 않고 핵심 원리, 비교 기준과 적용 시 주의점이 서로 이어져야 합니다."
+    : `정답은 “${question.answer}”입니다.`;
+  const solvingProcess = question.code
+    ? "코드와 수식은 입력값과 shape를 먼저 적고, 실행 순서에 따라 중간값을 계산한 뒤 반환값과 실제로 변경된 값을 분리해 확인합니다. 마지막에는 문제에서 요구한 출력 형식과 단위를 그대로 맞춥니다."
+    : question.kind === "객관식"
+      ? "먼저 질문이 요구하는 판단 기준을 한 문장으로 정리한 다음 각 보기가 그 기준을 만족하는지 확인합니다. ‘항상’, ‘완전히’, ‘자동으로’처럼 지나치게 강한 표현은 반례가 없는지도 점검합니다."
+      : question.kind === "단답형"
+        ? "질문에서 요구한 대상이 값, 수식, shape, 함수명 중 무엇인지 먼저 구분합니다. 계산 근거를 확인한 뒤 답안에는 요구된 표기만 남기고 대소문자, 괄호, 쉼표와 공백을 맞춥니다."
+        : "답안은 결론을 먼저 제시하고, 왜 그런지 작동 원리를 설명한 뒤 비교 대상이나 한계, 실제 적용 시 확인할 조건을 덧붙이는 순서로 구성하면 누락을 줄일 수 있습니다.";
+
+  return [
+    `정답과 직접 근거\n${answerLead} ${question.explanation}`,
+    `풀이 과정\n${solvingProcess}`,
+    `핵심 개념\n${guide?.concept ?? "문제의 입력, 변환 과정, 출력과 평가 기준을 분리해서 연결하면 같은 개념의 변형 문제에도 적용할 수 있습니다."}`,
+    `헷갈리기 쉬운 점\n${guide?.caution ?? "용어가 비슷하더라도 목적과 계산 시점이 다를 수 있으므로 정의, 입력, 출력과 사용 단계를 함께 비교하세요."}`,
+  ].join("\n\n");
+}
+
+function ExplanationContent({ text }: { text: string }) {
+  const sections = text.split("\n\n").map((section) => {
+    const [heading, ...body] = section.split("\n");
+    return { heading, body: body.join("\n") };
+  });
+
+  if (sections.length === 1 || sections.some((section) => !section.body)) {
+    return <span className="explanation-copy">{text}</span>;
+  }
+
+  return (
+    <span className="detailed-explanation">
+      {sections.map((section) => (
+        <span className="explanation-section" key={section.heading}>
+          <strong>{section.heading}</strong>
+          <span>{section.body}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+const rawPracticeQuestionBank: Question[] = [
   Q("py-01", "Python·API·JSON", "객관식", "기초", "다음 코드의 출력 결과로 옳은 것을 고르시오.", "27 str", "int(value)는 새 int 값을 만들지만 value를 바꾸지 않습니다. 따라서 덧셈은 27이고 원래 변수의 자료형은 str입니다.", 'value = "24"\nprint(int(value) + 3, type(value).__name__)', ["27 int", "27 str", "243 str", "TypeError"]),
   Q("py-02", "Python·API·JSON", "단답형", "기초", "출력 결과를 정확히 작성하시오.", "[1, 3, 5]", "슬라이스의 stop은 포함되지 않습니다. 인덱스 1에서 시작해 5 전까지 두 칸씩 건너뛰면 1, 3, 5가 선택됩니다.", "values = [0, 1, 2, 3, 4, 5]\nprint(values[1:6:2])"),
   Q("py-03", "Python·API·JSON", "단답형", "핵심", "두 print 문의 출력을 줄바꿈까지 동일하게 작성하시오.", "None\n[1, 2, 3]", "list.append는 원본 리스트를 수정하고 None을 반환합니다. result에는 None, values에는 3이 추가된 리스트가 남습니다.", "values = [1, 2]\nresult = values.append(3)\nprint(result)\nprint(values)"),
@@ -1747,6 +1870,11 @@ const questionBank: Question[] = [
   Q("llm-24", "LLM·평가·안전", "객관식", "사고형", "LLM 평가 설계를 구성하는 핵심 세 요소의 연결로 가장 적절한 것은?", "대표성 있는 평가 데이터, 목적에 맞는 지표, 재현 가능한 평가 프로토콜", "평가 점수는 문항 분포, metric 정의, prompt와 decoding 및 채점 절차에 따라 달라집니다. 세 요소를 함께 고정하고 오류 유형과 신뢰구간도 확인해야 비교가 의미 있습니다.", undefined, ["대표성 있는 평가 데이터, 목적에 맞는 지표, 재현 가능한 평가 프로토콜", "모델 이름, 로고 색상, 파일 확장자", "학습률, 브라우저 크기, 운영체제 이름", "token 하나, 정답 하나, 평가자 없음"]),
   ...visionQuestions as Question[],
 ];
+
+const questionBank: Question[] = rawPracticeQuestionBank.map((question) => ({
+  ...question,
+  explanation: expandExplanation(question),
+}));
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -2195,7 +2323,7 @@ export default function Home() {
                 </p>
                 <div>
                   <b>해설</b>
-                  {question.explanation}
+                  <ExplanationContent text={question.explanation} />
                 </div>
               </div>
             )}
@@ -2413,7 +2541,7 @@ export default function Home() {
                   <p><b>{!graded ? "모범답안" : "정답"}</b><span className="formatted-answer">{question.answer}</span></p>
                   <div className="explanation">
                     <b>판단 과정과 핵심 원리</b>
-                    {question.explanation}
+                    <ExplanationContent text={question.explanation} />
                   </div>
                   {!graded && (
                     <div className="self-review">
