@@ -390,12 +390,12 @@ export const choiceBalanceOverrides: Record<string, ChoiceBalanceOverride> = {
     ],
   },
   "nn-24": {
-    answer: "Grid는 모든 조합, Random은 무작위 조합을 평가한다.",
+    answer: "훈련 데이터에서의 R²",
     choices: [
-      "Grid는 모든 조합, Random은 무작위 조합을 평가한다.",
-      "Grid와 Random은 gradient로 weight 조합만 갱신한다.",
-      "Random은 후보 조합을 만들지만 실제 평가는 하지 않는다.",
-      "Grid는 test set만 사용해 각 후보 모델을 다시 학습한다.",
+      "훈련 데이터에서의 R²",
+      "훈련 데이터에서의 잔차표준오차 RSE",
+      "검증 데이터에서의 예측오차",
+      "개별 회귀계수의 표준오차",
     ],
   },
   "nlp-01": {
@@ -678,12 +678,12 @@ export const choiceBalanceOverrides: Record<string, ChoiceBalanceOverride> = {
     ],
   },
   "llm-19": {
-    answer: "평가 문항과 유사한 데이터가 학습에 포함된 경우",
+    answer: "오류와 편향이 반복될 수 있다.",
     choices: [
-      "평가 문항과 유사한 데이터가 학습에 포함된 경우",
-      "평가 문항을 모델 학습이 끝난 뒤 새로 작성한 경우",
-      "평가자가 문항별로 동일한 채점 기준표를 사용한 경우",
-      "서로 다른 난이도의 문항을 한 평가에 함께 사용한 경우",
+      "오류와 편향이 반복될 수 있다.",
+      "학습 데이터의 크기가 자동으로 0이 된다.",
+      "모든 응답이 항상 사실로 검증된다.",
+      "사람의 품질 검토가 필요 없어지게 된다.",
     ],
   },
   "llm-21": {
