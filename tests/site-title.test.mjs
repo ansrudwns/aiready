@@ -12,3 +12,16 @@ test("사이트 이름은 화면과 metadata에서 AIready로 통일된다", asy
   assert.match(page, /<h2>AIready<\/h2>/);
   assert.match(layout, /title: "AIready"/);
 });
+
+test("사이트 기본 팔레트는 어두운 머스터드 계열이다", async () => {
+  const [css, favicon] = await Promise.all([
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../public/favicon.svg", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(css, /--green: #8a650f;/i);
+  assert.match(css, /--green-dark: #493812;/i);
+  assert.match(css, /--lime: #e3b93e;/i);
+  assert.match(favicon, /#8A650F/);
+  assert.doesNotMatch(css, /#0b6b57|#084c40|#d8f17b/i);
+});

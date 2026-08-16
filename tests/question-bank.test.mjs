@@ -60,6 +60,14 @@ test("기본 활성화 AI 6개 영역은 모든 유형에 상세 해설을 제�
       `${question.id}: 기본 비활성화 영역이 상세 해설 대상에 포함됨`);
   }
 });
+
+test("겹치는 LLM 용어는 문항의 직접 주제에 맞는 해설로 연결한다", () => {
+  const icl = questionBank.find((question) => question.id === "llm-12");
+  const rag = questionBank.find((question) => question.id === "llm-20");
+  assert.match(icl.explanation, /In-context learning은 prompt 안의 예시/);
+  assert.doesNotMatch(icl.explanation, /RAG는 검색된 외부 근거/);
+  assert.match(rag.explanation, /RAG는 검색된 외부 근거/);
+});
 const kinds = new Set(["객관식", "단답형", "서술형"]);
 const difficulties = new Set(["기초", "핵심", "사고형", "고난도"]);
 
