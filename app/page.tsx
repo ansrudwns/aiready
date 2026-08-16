@@ -2157,12 +2157,12 @@ export default function Home() {
     }));
     const objectiveResults = liveResults.filter((item) => item.graded);
     const liveScore = objectiveResults.filter((item) => item.correct).length;
-    const currentObjectiveIds = objectiveResults.map((item) => item.question.id);
-    const newlyWrong = objectiveResults
-      .filter((item) => !item.correct)
+    const currentQuestionIds = liveResults.map((item) => item.question.id);
+    const newlyWrong = liveResults
+      .filter((item) => !item.graded || !item.correct)
       .map((item) => item.question.id);
     const nextWrong = [
-      ...live.wrongIds.filter((id) => !currentObjectiveIds.includes(id)),
+      ...live.wrongIds.filter((id) => !currentQuestionIds.includes(id)),
       ...newlyWrong,
     ];
     const nextHistory = objectiveResults.length
@@ -2315,6 +2315,11 @@ export default function Home() {
 
     if (question.kind === "서술형") {
       setRevealedIds((before) => [...before, question.id]);
+      const nextWrong = wrongIds.includes(question.id)
+        ? wrongIds
+        : [...wrongIds, question.id];
+      setWrongIds(nextWrong);
+      localStorage.setItem("ai-eval-wrong", JSON.stringify(nextWrong));
       return;
     }
 
@@ -2648,7 +2653,7 @@ export default function Home() {
       ? Math.round((score / gradedResults.length) * 100)
       : 0;
     const wrong = results
-      .filter((item) => item.graded && !item.correct)
+      .filter((item) => !item.graded || !item.correct)
       .map((item) => item.question);
     return (
       <main className="result-page">
@@ -2682,7 +2687,7 @@ export default function Home() {
               </button>
               {wrong.length > 0 && (
                 <button className="secondary" onClick={() => startExam(wrong)}>
-                  오답 {wrong.length}문제 다시 풀기
+                  오답·서술형 {wrong.length}문제 다시 풀기
                 </button>
               )}
             </div>
@@ -2736,7 +2741,7 @@ export default function Home() {
               <span className="section-kicker">문항별 해설</span>
               <h2>답을 복기해보세요</h2>
             </div>
-            <span className="review-count">오답 {wrong.length}개</span>
+            <span className="review-count">복습 대상 {wrong.length}개</span>
           </div>
           <div className="review-list">
             {results.map(({ question, correct, graded }, index) => (
