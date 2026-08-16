@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { checkShortAnswer } from "../src/grading.js";
+import { choiceBalanceOverrides } from "./choice-balance-overrides";
 import { visionQuestions } from "./vision-questions";
 
 type Kind = "객관식" | "단답형" | "서술형";
@@ -2071,10 +2072,14 @@ const rawPracticeQuestionBank: Question[] = [
   ...visionQuestions as Question[],
 ];
 
-const questionBank: Question[] = rawPracticeQuestionBank.map((question) => ({
-  ...question,
-  explanation: expandExplanation(question),
-}));
+const questionBank: Question[] = rawPracticeQuestionBank.map((question) => {
+  const override = choiceBalanceOverrides[question.id];
+  return {
+    ...question,
+    ...(override ? { answer: override.answer, choices: override.choices } : {}),
+    explanation: expandExplanation(question),
+  };
+});
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];

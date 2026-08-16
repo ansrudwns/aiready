@@ -141,6 +141,32 @@ test("객관식은 중복 없는 4개 보기와 정확히 하나의 정답을 �
   }
 });
 
+test("객관식 정답 길이가 정답을 추측하게 만드는 편향을 제한한다", () => {
+  const objectives = questionBank.filter((item) => item.kind === "객관식");
+  const metrics = objectives.map((question) => {
+    const answerLength = [...question.answer].length;
+    const wrongLengths = question.choices
+      .filter((choice) => choice !== question.answer)
+      .map((choice) => [...choice].length);
+    const wrongAverage = wrongLengths.reduce((sum, length) => sum + length, 0) / wrongLengths.length;
+    return {
+      id: question.id,
+      uniqueLongest: answerLength > Math.max(...wrongLengths),
+      ratio: answerLength / wrongAverage,
+    };
+  });
+  const uniqueLongest = metrics.filter((item) => item.uniqueLongest);
+  const ratio125 = metrics.filter((item) => item.ratio >= 1.25);
+  const ratio150 = metrics.filter((item) => item.ratio >= 1.5);
+
+  assert.ok(uniqueLongest.length <= 20,
+    `정답만 가장 긴 문항이 ${uniqueLongest.length}개임: ${uniqueLongest.map((item) => item.id).join(", ")}`);
+  assert.ok(ratio125.length <= 8,
+    `정답이 오답 평균의 1.25배 이상인 문항이 ${ratio125.length}개임: ${ratio125.map((item) => item.id).join(", ")}`);
+  assert.equal(ratio150.length, 0,
+    `정답이 오답 평균의 1.5배 이상인 문항: ${ratio150.map((item) => item.id).join(", ")}`);
+});
+
 test("서술형 지문에는 글자 수 조건이 없고 모범답안은 충분히 구체적이다", () => {
   const essays = questionBank.filter((question) => question.kind === "서술형");
   assert.ok(essays.length >= 7);
