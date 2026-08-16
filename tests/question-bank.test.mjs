@@ -8,7 +8,7 @@ async function loadQuestionBank() {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   const result = await build({
     stdin: {
-      contents: `${source}\nexport { questionBank, rawPracticeQuestionBank };`,
+      contents: `${source}\nexport { questionBank, rawPracticeQuestionBank, explanationNotes };`,
       loader: "tsx",
       resolveDir: fileURLToPath(new URL("../app", import.meta.url)),
       sourcefile: "page.tsx",
@@ -22,7 +22,7 @@ async function loadQuestionBank() {
   return await import(moduleUrl);
 }
 
-const { questionBank, rawPracticeQuestionBank } = await loadQuestionBank();
+const { questionBank, rawPracticeQuestionBank, explanationNotes } = await loadQuestionBank();
 const pageUrl = new URL("../app/page.tsx", import.meta.url);
 const categories = new Set([
   "Python·API·JSON",
@@ -48,23 +48,26 @@ test("기본 활성화 AI 6개 영역은 모든 유형에 상세 해설을 제�
   const inactiveQuestions = questionBank.filter((question) => !activeCategories.has(question.category));
   assert.equal(activeQuestions.length, 144);
   assert.equal(inactiveQuestions.length, 72);
+  assert.equal(Object.keys(explanationNotes).length, 144);
+  assert.equal(new Set(Object.values(explanationNotes)).size, 144);
   assert.deepEqual(new Set(activeQuestions.map((question) => question.kind)), new Set(["객관식", "단답형", "서술형"]));
   for (const question of activeQuestions) {
     const rawQuestion = rawPracticeQuestionBank.find((item) => item.id === question.id);
     assert.ok(rawQuestion, `${question.id}: 원문 문항 누락`);
+    assert.ok(explanationNotes[question.id], `${question.id}: 개별 보강 해설 누락`);
+    assert.ok(explanationNotes[question.id].length >= 70, `${question.id}: 개별 보강 해설이 너무 짧음`);
     assert.match(question.explanation, new RegExp(rawQuestion.explanation.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
       `${question.id}: 문항에 직접 작성된 해설이 유지되지 않음`);
-    assert.doesNotMatch(question.explanation, /쉽게 말하면/, `${question.id}: 제거 대상 표현이 남음`);
-    if (question.kind !== "서술형") {
-      assert.match(question.explanation, /^정답은 “.+”입니다\./, `${question.id}: 정답과 직접 연결된 해설 누락`);
-    }
+    assert.match(question.explanation, new RegExp(explanationNotes[question.id].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+      `${question.id}: 개별 보강 해설이 결과에 포함되지 않음`);
+    assert.doesNotMatch(question.explanation, /쉽게 말하면|선택지를 비교할 때는 아래 설명|같은 유형에서는 문제의 숫자|모범답안에서는 결론만/,
+      `${question.id}: 공통 자동 문장이 남음`);
     assert.doesNotMatch(question.explanation, /정답과 직접 근거|풀이 과정|핵심 개념|헷갈리기 쉬운 점/,
       `${question.id}: 불필요한 세부 제목이 남음`);
     assert.ok(question.explanation.length >= 110, `${question.id}: 해설이 충분하지 않음`);
   }
   for (const question of inactiveQuestions) {
-    assert.doesNotMatch(question.explanation, /정답은 “/,
-      `${question.id}: 기본 비활성화 영역이 상세 해설 대상에 포함됨`);
+    assert.equal(explanationNotes[question.id], undefined, `${question.id}: 기본 비활성화 영역에 개별 보강이 적용됨`);
   }
 });
 
@@ -75,6 +78,15 @@ test("겹치는 LLM 용어는 문항의 직접 주제에 맞는 해설로 연결
   assert.doesNotMatch(icl.explanation, /검색은 지식 공급/);
   assert.match(rag.explanation, /검색은 지식 공급/);
   assert.doesNotMatch(rag.explanation, /파라미터는 그대로/);
+});
+
+test("개별 채점 결과는 답안 현황에서 정답과 오답으로 구분되고 정답 상자는 초록색이다", async () => {
+  const page = await readFile(pageUrl, "utf8");
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(page, /itemGraded && itemCorrect \? "graded-correct"/);
+  assert.match(page, /itemGraded && !itemCorrect \? "graded-wrong"/);
+  assert.match(css, /\.number-grid button\.graded-wrong[^}]*#fff0ed[^}]*#b9362b/s);
+  assert.match(css, /\.instant-feedback\.correct[^}]*#eef9f1[^}]*#2f6744/s);
 });
 const kinds = new Set(["객관식", "단답형", "서술형"]);
 const difficulties = new Set(["기초", "핵심", "사고형", "고난도"]);
