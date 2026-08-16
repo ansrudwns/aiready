@@ -316,6 +316,12 @@ footer p, footer > span { font-size: 12px; color: rgba(255,255,255,.55); }
 .choices button.selected { border: 2px solid var(--green); background: #f5e9c6; }
 .choices button.selected span { background: var(--green); color: white; }
 .choices button:disabled { cursor: default; opacity: .82; }
+.choices button.choice-correct,
+.choices button.choice-correct:disabled { border: 2px solid #4f9f69; background: #e8f6ec; color: #235f38; opacity: 1; }
+.choices button.choice-correct span { background: #318653; color: white; }
+.choices button.choice-wrong,
+.choices button.choice-wrong:disabled { border: 2px solid #dc7769; background: #fff0ed; color: #9f332a; opacity: 1; }
+.choices button.choice-wrong span { background: #c94c3e; color: white; }
 .answer-field { display: flex; flex-direction: column; gap: 8px; }
 .answer-field input, .answer-field textarea {
   width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 17px 18px; outline: none; background: #fffefa;

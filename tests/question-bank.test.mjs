@@ -88,6 +88,15 @@ test("개별 채점 결과는 답안 현황에서 정답과 오답으로 구분�
   assert.match(css, /\.number-grid button\.graded-wrong[^}]*#fff0ed[^}]*#b9362b/s);
   assert.match(css, /\.instant-feedback\.correct[^}]*#eef9f1[^}]*#2f6744/s);
 });
+
+test("객관식 오답 채점 후 선택한 오답과 실제 정답 선택지를 함께 표시한다", async () => {
+  const page = await readFile(pageUrl, "utf8");
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(page, /isRevealed && isCorrectChoice \? "choice-correct"/);
+  assert.match(page, /isRevealed && isSelectedChoice && !isCorrectChoice \? "choice-wrong"/);
+  assert.match(css, /\.choices button\.choice-correct[^}]*#e8f6ec[^}]*#235f38/s);
+  assert.match(css, /\.choices button\.choice-wrong[^}]*#fff0ed[^}]*#9f332a/s);
+});
 const kinds = new Set(["객관식", "단답형", "서술형"]);
 const difficulties = new Set(["기초", "핵심", "사고형", "고난도"]);
 

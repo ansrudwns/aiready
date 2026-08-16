@@ -2435,19 +2435,27 @@ export default function Home() {
 
             {question.choices ? (
               <div className="choices">
-                {question.choices.map((choice, index) => (
-                  <button
-                    key={choice}
-                    className={answers[question.id] === choice ? "selected" : ""}
-                    disabled={isRevealed}
-                    onClick={() =>
-                      setAnswers((before) => ({ ...before, [question.id]: choice }))
-                    }
-                  >
-                    <span>{index + 1}</span>
-                    {choice}
-                  </button>
-                ))}
+                {question.choices.map((choice, index) => {
+                  const isSelectedChoice = answers[question.id] === choice;
+                  const isCorrectChoice = choice === question.answer;
+                  return (
+                    <button
+                      key={choice}
+                      className={[
+                        isSelectedChoice ? "selected" : "",
+                        isRevealed && isCorrectChoice ? "choice-correct" : "",
+                        isRevealed && isSelectedChoice && !isCorrectChoice ? "choice-wrong" : "",
+                      ].join(" ")}
+                      disabled={isRevealed}
+                      onClick={() =>
+                        setAnswers((before) => ({ ...before, [question.id]: choice }))
+                      }
+                    >
+                      <span>{index + 1}</span>
+                      {choice}
+                    </button>
+                  );
+                })}
               </div>
             ) : question.kind === "서술형" ? (
               <div className="answer-field">
