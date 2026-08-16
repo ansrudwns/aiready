@@ -50,14 +50,20 @@ test("기본 활성화 AI 6개 영역은 모든 유형에 상세 해설을 제�
   assert.equal(inactiveQuestions.length, 72);
   assert.deepEqual(new Set(activeQuestions.map((question) => question.kind)), new Set(["객관식", "단답형", "서술형"]));
   for (const question of activeQuestions) {
-    assert.match(question.explanation, /\n\n주의\n/, `${question.id}: 주의 설명 누락`);
-    assert.match(question.explanation, /쉽게 말하면/, `${question.id}: 쉬운 설명 누락`);
+    const rawQuestion = rawPracticeQuestionBank.find((item) => item.id === question.id);
+    assert.ok(rawQuestion, `${question.id}: 원문 문항 누락`);
+    assert.match(question.explanation, new RegExp(rawQuestion.explanation.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+      `${question.id}: 문항에 직접 작성된 해설이 유지되지 않음`);
+    assert.doesNotMatch(question.explanation, /쉽게 말하면/, `${question.id}: 제거 대상 표현이 남음`);
+    if (question.kind !== "서술형") {
+      assert.match(question.explanation, /^정답은 “.+”입니다\./, `${question.id}: 정답과 직접 연결된 해설 누락`);
+    }
     assert.doesNotMatch(question.explanation, /정답과 직접 근거|풀이 과정|핵심 개념|헷갈리기 쉬운 점/,
       `${question.id}: 불필요한 세부 제목이 남음`);
-    assert.ok(question.explanation.length >= 200, `${question.id}: 상세 해설이 충분하지 않음`);
+    assert.ok(question.explanation.length >= 110, `${question.id}: 해설이 충분하지 않음`);
   }
   for (const question of inactiveQuestions) {
-    assert.doesNotMatch(question.explanation, /\n\n주의\n/,
+    assert.doesNotMatch(question.explanation, /정답은 “/,
       `${question.id}: 기본 비활성화 영역이 상세 해설 대상에 포함됨`);
   }
 });
@@ -65,9 +71,10 @@ test("기본 활성화 AI 6개 영역은 모든 유형에 상세 해설을 제�
 test("겹치는 LLM 용어는 문항의 직접 주제에 맞는 해설로 연결한다", () => {
   const icl = questionBank.find((question) => question.id === "llm-12");
   const rag = questionBank.find((question) => question.id === "llm-20");
-  assert.match(icl.explanation, /시험지에 예시를 함께 적어 주는 방식/);
-  assert.doesNotMatch(icl.explanation, /오픈북 시험/);
-  assert.match(rag.explanation, /오픈북 시험/);
+  assert.match(icl.explanation, /파라미터는 그대로/);
+  assert.doesNotMatch(icl.explanation, /검색은 지식 공급/);
+  assert.match(rag.explanation, /검색은 지식 공급/);
+  assert.doesNotMatch(rag.explanation, /파라미터는 그대로/);
 });
 const kinds = new Set(["객관식", "단답형", "서술형"]);
 const difficulties = new Set(["기초", "핵심", "사고형", "고난도"]);

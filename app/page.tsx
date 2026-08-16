@@ -1711,26 +1711,27 @@ const easyExplanationGuides: ExplanationGuide[] = [
   { category: "ViT·학습 전략", pattern: /L1|L2|Dropout|정규화|augmentation|학습률|Cosine|validation loss|early stopping/, concept: "쉽게 말하면, 정규화와 데이터 증강은 답을 통째로 외우지 못하게 다양한 연습을 시키는 방법입니다. 조기 종료는 모의고사 점수가 나빠지기 시작할 때 학습을 멈추는 방법입니다.", caution: "훈련 점수만 계속 좋아지고 검증 점수가 나빠지면 외우기만 하고 있을 가능성이 큽니다." },
 ];
 
+// 이전 해설 데이터는 문제은행 원문과의 비교 검증을 위해 남겨 둔다.
+void categoryExplanationFallback;
+void explanationGuides;
+void easyCategoryExplanation;
+void easyExplanationGuides;
+
 function expandExplanation(question: Question): string {
   if (!detailedExplanationCategories.has(question.category)) return question.explanation;
 
-  const searchable = `${question.question} ${question.answer} ${question.explanation}`;
-  const matched = easyExplanationGuides.findLast(
-    (guide) => guide.category === question.category && guide.pattern.test(searchable),
-  );
-  const technicalFallback = explanationGuides.findLast(
-    (guide) => guide.category === question.category && guide.pattern.test(searchable),
-  );
-  const guide = matched
-    ?? easyCategoryExplanation[question.category]
-    ?? technicalFallback
-    ?? categoryExplanationFallback[question.category];
+  if (question.kind === "객관식") {
+    const direction = question.question.includes("옳지 않은") || question.question.includes("보기 어려운")
+      ? "이 문항은 틀린 설명을 찾는 문제이므로 질문의 부정 표현까지 함께 확인해야 합니다."
+      : "선택지를 비교할 때는 아래 설명에 나온 정의와 조건을 기준으로 판단하면 됩니다.";
+    return `정답은 “${question.answer}”입니다. ${question.explanation}\n\n${direction}`;
+  }
 
-  return [
-    question.explanation,
-    guide?.concept ?? "문제의 입력, 변환 과정, 출력과 평가 기준을 분리해서 연결하면 같은 개념의 변형 문제에도 적용할 수 있습니다.",
-    `주의\n${guide?.caution ?? "용어가 비슷하더라도 목적과 계산 시점이 다를 수 있으므로 정의, 입력, 출력과 사용 단계를 함께 비교하세요."}`,
-  ].join("\n\n");
+  if (question.kind === "단답형") {
+    return `정답은 “${question.answer}”입니다. ${question.explanation}\n\n같은 유형에서는 문제의 숫자나 대상이 바뀌어도 위의 정의, 계산식 또는 적용 순서를 그대로 사용하면 됩니다.`;
+  }
+
+  return `${question.explanation}\n\n모범답안에서는 결론만 적기보다 질문에서 요구한 개념과 그 이유를 서로 연결해 설명하는 것이 중요합니다.`;
 }
 
 function ExplanationContent({ text }: { text: string }) {
