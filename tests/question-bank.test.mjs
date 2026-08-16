@@ -51,9 +51,10 @@ test("기본 활성화 AI 6개 영역은 모든 유형에 상세 해설을 제�
   assert.deepEqual(new Set(activeQuestions.map((question) => question.kind)), new Set(["객관식", "단답형", "서술형"]));
   for (const question of activeQuestions) {
     assert.match(question.explanation, /\n\n주의\n/, `${question.id}: 주의 설명 누락`);
+    assert.match(question.explanation, /쉽게 말하면/, `${question.id}: 쉬운 설명 누락`);
     assert.doesNotMatch(question.explanation, /정답과 직접 근거|풀이 과정|핵심 개념|헷갈리기 쉬운 점/,
       `${question.id}: 불필요한 세부 제목이 남음`);
-    assert.ok(question.explanation.length >= 250, `${question.id}: 상세 해설이 충분하지 않음`);
+    assert.ok(question.explanation.length >= 200, `${question.id}: 상세 해설이 충분하지 않음`);
   }
   for (const question of inactiveQuestions) {
     assert.doesNotMatch(question.explanation, /\n\n주의\n/,
@@ -64,9 +65,9 @@ test("기본 활성화 AI 6개 영역은 모든 유형에 상세 해설을 제�
 test("겹치는 LLM 용어는 문항의 직접 주제에 맞는 해설로 연결한다", () => {
   const icl = questionBank.find((question) => question.id === "llm-12");
   const rag = questionBank.find((question) => question.id === "llm-20");
-  assert.match(icl.explanation, /In-context learning은 prompt 안의 예시/);
-  assert.doesNotMatch(icl.explanation, /RAG는 검색된 외부 근거/);
-  assert.match(rag.explanation, /RAG는 검색된 외부 근거/);
+  assert.match(icl.explanation, /시험지에 예시를 함께 적어 주는 방식/);
+  assert.doesNotMatch(icl.explanation, /오픈북 시험/);
+  assert.match(rag.explanation, /오픈북 시험/);
 });
 const kinds = new Set(["객관식", "단답형", "서술형"]);
 const difficulties = new Set(["기초", "핵심", "사고형", "고난도"]);

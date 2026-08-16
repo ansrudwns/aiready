@@ -1645,14 +1645,86 @@ const explanationGuides: ExplanationGuide[] = [
   { category: "ViT·학습 전략", pattern: /L1|L2|Dropout|정규화|augmentation|학습률|Cosine|validation loss|early stopping/, concept: "정규화와 augmentation은 과적합을 줄이고, learning-rate schedule과 early stopping은 최적화 진행을 제어합니다. Dropout은 훈련 중 unit을 확률적으로 끄고 inverted 방식은 살아남은 값을 1/(1-p)로 조정합니다.", caution: "훈련 loss 감소와 validation loss 상승이 함께 나타나면 과적합 신호입니다. 정규화 강도, 증강과 중단 시점은 validation으로 고르고 test 결과를 보며 반복 조정하지 않습니다." },
 ];
 
+const easyCategoryExplanation: Partial<Record<Category, Pick<ExplanationGuide, "concept" | "caution">>> = {
+  "ML 기초·검증": {
+    concept: "쉽게 말하면, 모델은 여러 예시를 보고 규칙을 익힌 뒤 처음 보는 데이터에 답을 내는 프로그램입니다. 그래서 연습할 때 쓴 데이터와 실력을 확인할 데이터를 나누어야 합니다.",
+    caution: "연습 문제를 잘 푼 것과 처음 보는 문제를 잘 푸는 것은 다릅니다. 훈련 점수만 보고 모델이 좋다고 판단하지 마세요.",
+  },
+  "회귀·신경망": {
+    concept: "쉽게 말하면, 신경망은 입력값을 여러 단계의 계산에 통과시켜 답을 만듭니다. 답이 틀린 만큼 각 계산을 조금씩 고치고, 이 과정을 반복하면서 성능을 높입니다.",
+    caution: "예측값을 만드는 과정과 틀린 정도를 계산하는 과정, 실제 숫자를 고치는 과정을 한꺼번에 섞어 생각하지 마세요.",
+  },
+  "NLP·Transformer": {
+    concept: "쉽게 말하면, 컴퓨터는 문장을 그대로 읽지 못하므로 먼저 단어 조각을 번호와 숫자 묶음으로 바꿉니다. 그다음 주변 단어와의 관계를 살펴 문장의 뜻을 파악합니다.",
+    caution: "단어를 숫자로 바꾸는 단계와 문맥을 이해하는 단계는 서로 다릅니다. 같은 단어도 주변 문장에 따라 다른 뜻을 가질 수 있습니다.",
+  },
+  "LLM·평가·안전": {
+    concept: "쉽게 말하면, LLM은 앞에 나온 글을 보고 다음에 올 말을 고르는 일을 아주 많이 연습한 모델입니다. 자연스럽게 말하는 능력과 사실을 정확히 아는 능력은 같지 않습니다.",
+    caution: "답이 그럴듯하다는 이유만으로 사실이라고 믿으면 안 됩니다. 중요한 내용은 근거를 확인하고, 모델이 할 수 있는 작업의 권한도 제한해야 합니다.",
+  },
+  "CNN·이미지 모델": {
+    concept: "쉽게 말하면, CNN은 작은 돋보기를 사진 위에서 움직이며 선이나 모서리 같은 무늬를 찾습니다. 같은 돋보기를 여러 위치에서 사용하므로 사진 전체를 한 번에 연결하는 방식보다 계산이 적습니다.",
+    caution: "사진 크기, 채널 수, 필터 크기는 서로 다른 값입니다. 출력 크기와 학습해야 할 숫자 개수를 같은 공식으로 계산하지 마세요.",
+  },
+  "ViT·학습 전략": {
+    concept: "쉽게 말하면, ViT는 사진을 퍼즐 조각처럼 나눈 뒤 각 조각이 다른 조각과 얼마나 관련 있는지 비교합니다. 조각의 원래 위치도 따로 알려 주어야 사진의 배치를 이해할 수 있습니다.",
+    caution: "구조가 좋아도 데이터가 부족하거나 학습 설정이 맞지 않으면 성능이 떨어집니다. 훈련 점수와 검증 점수를 함께 보며 조정하세요.",
+  },
+};
+
+const easyExplanationGuides: ExplanationGuide[] = [
+  { category: "ML 기초·검증", pattern: /Precision|Recall|F1|정확도|혼동행렬|TP|FP|FN|TN/, concept: "쉽게 말하면, 정밀도는 ‘양성이라고 말한 것 중 진짜 양성이 얼마나 되는가’, 재현율은 ‘실제 양성을 얼마나 빠뜨리지 않고 찾았는가’를 묻는 값입니다.", caution: "전체 정답률이 높아도 중요한 소수 집단을 전부 놓칠 수 있습니다. 어떤 실수가 더 위험한지 먼저 생각하세요." },
+  { category: "ML 기초·검증", pattern: /validation|test|hold-out|K-fold|LOOCV|fold|과적합|과소적합|일반화/, concept: "쉽게 말하면, 훈련 데이터는 연습문제, 검증 데이터는 모의고사, 테스트 데이터는 마지막 실전 시험과 같습니다. 교차검증은 모의고사 문제 묶음을 번갈아 바꾸어 결과가 우연인지 확인하는 방법입니다.", caution: "실전 시험인 테스트 결과를 보면서 모델을 계속 고치면 이미 정답을 본 것과 같습니다. 테스트는 마지막에만 확인하세요." },
+  { category: "ML 기초·검증", pattern: /MSE|RMSE|R²|오차/, concept: "쉽게 말하면, MSE와 RMSE는 예측이 정답에서 평균적으로 얼마나 떨어졌는지 보여 줍니다. RMSE는 정답과 같은 단위라서 실제 오차 크기를 읽기 더 쉽습니다.", caution: "R²는 오차의 실제 크기가 아니라 단순히 평균으로 예측했을 때보다 얼마나 나은지를 비교하는 값입니다." },
+  { category: "ML 기초·검증", pattern: /K-means|군집|StandardScaler|비지도|계층/, concept: "쉽게 말하면, 군집화는 정답표 없이 서로 비슷한 대상을 같은 모둠으로 묶는 작업입니다. 키와 몸무게처럼 단위가 다른 값은 크기를 비슷하게 맞춘 뒤 거리를 재야 합니다.", caution: "모둠 번호 1, 2, 3 자체에는 순서나 우열의 뜻이 없습니다. 시작점이나 거리 기준이 바뀌면 결과도 달라질 수 있습니다." },
+  { category: "ML 기초·검증", pattern: /feature|label|지도|분류|회귀|상관|명목형|one-hot|ε/, concept: "쉽게 말하면, 입력 정보로 정답을 맞히는 것이 지도학습입니다. 숫자를 예측하면 회귀, 종류를 고르면 분류이며, 맑음·비 같은 이름에는 실제 크기 순서가 없다는 점을 모델에 알려 줘야 합니다.", caution: "두 값이 함께 움직인다고 해서 하나가 다른 하나의 원인이라고 바로 결론 내리면 안 됩니다." },
+
+  { category: "회귀·신경망", pattern: /선형회귀|회귀계수|최소제곱|정규방정식|다중공선성|RSE|t 통계량/, concept: "쉽게 말하면, 선형회귀는 데이터 점들 사이를 가장 잘 지나가는 직선을 찾는 방법입니다. 각 점과 직선 사이의 차이를 제곱해 더한 값이 가장 작아지도록 직선을 정합니다.", caution: "입력 변수들이 거의 같은 정보를 담으면 어느 변수의 영향인지 나누기 어려워 계수 해석이 흔들릴 수 있습니다." },
+  { category: "회귀·신경망", pattern: /로지스틱|softmax|교차엔트로피|one-hot/, concept: "쉽게 말하면, 로지스틱 회귀는 계산한 점수를 0과 1 사이의 확률로 바꾸어 어느 종류에 가까운지 판단합니다. 교차엔트로피는 정답 종류에 낮은 확률을 줄수록 더 큰 벌점을 줍니다.", caution: "이름에 회귀가 들어가지만 로지스틱 회귀는 주로 분류에 사용합니다. 확률을 얻은 뒤에는 종류를 고르는 기준도 필요합니다." },
+  { category: "회귀·신경망", pattern: /ReLU|Leaky|활성화|깊이|표현력|sigmoid/, concept: "쉽게 말하면, 활성화 함수는 신경망이 직선만 그리지 않고 구부러진 복잡한 경계도 만들 수 있게 해 줍니다. ReLU는 양수는 그대로 두고 음수는 0으로 만듭니다.", caution: "선형 계산만 여러 번 이어도 결국 하나의 선형 계산과 같습니다. ReLU의 음수 구간은 기울기가 0이라 학습이 멈출 수도 있습니다." },
+  { category: "회귀·신경망", pattern: /gradient|경사하강|mini-batch|full-batch|학습률|optimizer|Grid Search|Random Search/, concept: "쉽게 말하면, 경사하강법은 산에서 가장 가파르게 내려가는 방향을 보고 조금씩 낮은 곳으로 이동하는 것과 같습니다. 학습률은 한 번에 내딛는 걸음의 크기입니다.", caution: "걸음이 너무 크면 목적지를 지나쳐 흔들리고, 너무 작으면 도착하는 데 오래 걸립니다." },
+  { category: "회귀·신경망", pattern: /역전파|계산 그래프|연쇄법칙|PyTorch|nn\.Module|forward|zero_grad|backward|step|shape|파라미터 수/, concept: "쉽게 말하면, 역전파는 최종 오답에서 출발해 계산을 거꾸로 따라가며 ‘어느 숫자가 오답에 얼마나 영향을 줬는지’를 찾는 과정입니다. 그 영향도만큼 가중치를 고칩니다.", caution: "backward는 고칠 방향을 계산하고 step은 실제 값을 고칩니다. 두 동작을 같은 것으로 생각하지 마세요." },
+
+  { category: "NLP·Transformer", pattern: /one-hot|embedding|Skip-gram|CBOW|분포 가설|subword|tokenization|어휘 크기/, concept: "쉽게 말하면, 임베딩은 단어를 지도 위 좌표처럼 숫자 묶음으로 놓는 방법입니다. 비슷한 문맥에 자주 등장한 단어는 지도에서도 가까운 곳에 놓일 수 있습니다.", caution: "CBOW는 주변 단어로 가운데 단어를 맞히고, Skip-gram은 가운데 단어로 주변 단어를 맞힙니다." },
+  { category: "NLP·Transformer", pattern: /RNN|LSTM|GRU|hidden|gradient|장기 의존성/, concept: "쉽게 말하면, RNN은 문장을 왼쪽부터 읽으며 지금까지 읽은 내용을 작은 메모장에 계속 적습니다. LSTM과 GRU는 무엇을 지우고 남길지 정하는 문을 추가한 구조입니다.", caution: "문장이 매우 길면 앞부분 정보가 희미해질 수 있습니다. 문이 있다고 해서 이 문제가 완전히 사라지는 것은 아닙니다." },
+  { category: "NLP·Transformer", pattern: /Seq2Seq|teacher forcing|encoder-decoder|cross-attention|attention이 필요한/, concept: "쉽게 말하면, 번역할 때 출력 단어 하나를 만들 때마다 원문에서 관련 부분을 다시 표시해 보는 기능이 attention입니다. 한 문장 전체를 작은 메모 하나에 억지로 담는 부담을 줄여 줍니다.", caution: "교사 강요는 학습할 때 이전 정답을 보여 주는 방식입니다. 실제 사용 때는 이전 예측을 사용하므로 상황이 다릅니다." },
+  { category: "NLP·Transformer", pattern: /self-attention|Q, K, V|Scaled|multi-head|causal mask|위치|residual/, concept: "쉽게 말하면, Q는 ‘무엇을 찾을까’라는 질문, K는 각 정보에 붙은 색인, V는 실제로 가져올 내용입니다. 질문과 색인이 잘 맞을수록 그 내용을 더 많이 참고합니다.", caution: "미래 단어를 가리는 마스크와 빈칸 채우기용 패딩을 가리는 마스크는 목적이 다릅니다." },
+  { category: "NLP·Transformer", pattern: /BERT|MLM|T5|span corruption|N-gram|Transformer의 시퀀스/, concept: "쉽게 말하면, BERT는 문장 일부를 가리고 빈칸을 맞히며 문맥을 배웁니다. T5는 여러 단어로 된 구간을 가린 뒤 그 구간 전체를 다시 만들어 보며 학습합니다.", caution: "BERT처럼 문장을 양쪽에서 보는 모델과 앞의 단어만 보고 다음 단어를 만드는 모델은 학습 방식과 용도가 다릅니다." },
+
+  { category: "LLM·평가·안전", pattern: /Foundation|Scaling|emergent|사전학습|자기회귀/, concept: "쉽게 말하면, 파운데이션 모델은 아주 많은 글을 먼저 읽은 공통 기초 모델입니다. 이후 필요한 작업을 추가로 연습시키거나 지시를 주어 여러 용도로 사용합니다.", caution: "모델이 커졌다고 모든 능력이 자동으로 좋아지거나 갑자기 완벽해지는 것은 아닙니다." },
+  { category: "LLM·평가·안전", pattern: /SFT|RLHF|Reward|KL|in-context|fine-tuning/, concept: "쉽게 말하면, 문맥 내 학습은 시험지에 예시를 함께 적어 주는 방식이라 모델 자체는 바뀌지 않습니다. 미세조정은 예시로 다시 훈련해 모델 안의 가중치를 실제로 바꿉니다.", caution: "프롬프트에 예시를 넣는 것과 모델을 다시 학습하는 것을 같은 작업으로 생각하지 마세요." },
+  { category: "LLM·평가·안전", pattern: /temperature|beam search|top-p|top-k|디코딩/, concept: "쉽게 말하면, 생성 방법은 다음 단어 후보를 고르는 규칙입니다. 가장 가능성 높은 하나만 고를 수도 있고, 가능성 높은 여러 후보 중에서 뽑을 수도 있습니다.", caution: "다양성을 줄이면 답이 일정해질 수 있지만 사실이 아닌 답까지 자동으로 사라지는 것은 아닙니다." },
+  { category: "LLM·평가·안전", pattern: /perplexity|BLEU|ROUGE|Judge|평가|benchmark|cosine|유사도/, concept: "쉽게 말하면, 평가 지표는 서로 다른 자를 사용하는 것과 같습니다. 문장 겹침을 재는 자, 다음 단어 확률을 재는 자, 사람이 느끼는 품질을 재는 자는 결과가 서로 다를 수 있습니다.", caution: "한 점수만 높다고 전체 품질이 좋다고 말하면 안 됩니다. 정확성, 유용성, 안전성을 따로 확인하세요." },
+  { category: "LLM·평가·안전", pattern: /환각|RAG|jailbreak|안전|사내 지식/, concept: "쉽게 말하면, RAG는 모델이 기억만으로 답하지 않고 필요한 자료를 먼저 찾아 펼쳐 놓고 답하게 하는 방식입니다. 오픈북 시험과 비슷합니다.", caution: "찾아온 자료가 틀리면 답도 틀릴 수 있습니다. 자료 검색과 최종 답을 모두 확인해야 합니다." },
+  { category: "LLM·평가·안전", pattern: /System prompt|프롬프트 구성|모호성/, concept: "쉽게 말하면, 좋은 프롬프트는 부탁할 일, 참고할 자료, 지켜야 할 조건, 원하는 답 모양을 각각 분명하게 적은 작업 지시서입니다.", caution: "프롬프트는 행동을 안내하지만 보안 장치는 아닙니다. 중요한 권한 확인은 프로그램에서 따로 해야 합니다." },
+
+  { category: "CNN·이미지 모델", pattern: /출력 너비|출력 공간|파라미터 수|shape|채널 수|비용|비율/, concept: "쉽게 말하면, 필터가 사진 안에서 몇 번 움직일 수 있는지를 세면 출력 크기가 나옵니다. 필터 안의 숫자 개수에 입력·출력 채널 수를 곱하면 학습할 가중치 수를 구할 수 있습니다.", caution: "사진의 가로세로 크기는 출력 계산량에 영향을 주지만, 같은 필터의 가중치 개수를 늘리지는 않습니다." },
+  { category: "CNN·이미지 모델", pattern: /국소|가중치 공유|완전연결|ReLU|pooling|해상도|수용영역/, concept: "쉽게 말하면, CNN은 작은 창으로 사진의 일부를 보고 그 창을 옆으로 옮겨 같은 무늬를 찾습니다. 층을 여러 번 거치면 점점 더 넓은 영역을 함께 보게 됩니다.", caution: "사진을 줄이면 계산은 빨라지지만 작은 글자나 정확한 위치 정보가 사라질 수 있습니다." },
+  { category: "CNN·이미지 모델", pattern: /AlexNet|VGG|degradation|ResNet|Residual|bottleneck/, concept: "쉽게 말하면, VGG는 작은 필터를 차곡차곡 쌓고, ResNet은 입력이 지나갈 지름길을 만들어 깊은 모델도 학습하기 쉽게 합니다.", caution: "깊은 모델의 훈련 점수까지 나빠지는 현상은 단순히 과적합 때문이라고 볼 수 없습니다." },
+  { category: "CNN·이미지 모델", pattern: /MobileNet|Depthwise|pointwise|separable/, concept: "쉽게 말하면, MobileNet은 ‘각 채널에서 무늬 찾기’와 ‘채널 정보 섞기’를 두 단계로 나눕니다. 한 번에 모두 계산하는 것보다 가볍게 만들기 위한 방법입니다.", caution: "채널별 계산만 하고 끝내면 채널 사이 정보가 섞이지 않습니다. 뒤의 1×1 계산도 필요합니다." },
+  { category: "CNN·이미지 모델", pattern: /계산 자원|activation|FLOPs|메모리|효율적인 이유|비교/, concept: "쉽게 말하면, 파라미터 수는 모델 파일의 짐 크기, 중간 결과는 작업 중 펼쳐 놓는 책상 크기, FLOPs는 해야 할 계산 횟수와 비슷합니다.", caution: "모델 파일이 작아도 중간 결과가 크면 메모리를 많이 쓰거나 실행이 느릴 수 있습니다." },
+
+  { category: "ViT·학습 전략", pattern: /patch|token 수|Q, K, V|위치|positional|Swin|window|장거리|전역/, concept: "쉽게 말하면, 사진을 같은 크기의 퍼즐 조각으로 나누고 각 조각을 하나의 단어처럼 다룹니다. 조각끼리 비교해 멀리 떨어진 부분의 관계도 찾습니다.", caution: "조각 내용만 주면 원래 어디에 있던 조각인지 알기 어렵습니다. 위치 정보를 함께 넣어야 합니다." },
+  { category: "ViT·학습 전략", pattern: /ViT|DeiT|teacher|student|사전학습|linear probing|fine-tuning/, concept: "쉽게 말하면, 먼저 많은 사진으로 공부한 모델을 가져와 새 문제에 활용합니다. 처음에는 기존 부분을 고정하고 마지막 분류 부분만 학습해 보는 것이 안전한 출발점입니다.", caution: "데이터가 적을 때 모델 전체를 큰 학습률로 바꾸면 이미 배운 좋은 특징이 쉽게 망가질 수 있습니다." },
+  { category: "ViT·학습 전략", pattern: /활성화|Sigmoid|tanh|ReLU|Leaky|dying/, concept: "쉽게 말하면, 활성화 함수는 계산 결과를 꺾어 신경망이 복잡한 모양도 표현하게 합니다. Leaky ReLU는 음수에서도 아주 작은 길을 남겨 학습이 완전히 멈추는 일을 줄입니다.", caution: "활성화 함수가 없으면 층을 많이 쌓아도 복잡한 경계를 만들기 어렵습니다." },
+  { category: "ViT·학습 전략", pattern: /초기화|Xavier|He|대칭|Residual branch/, concept: "쉽게 말하면, 초기화는 학습을 시작할 때 가중치의 첫 값을 정하는 일입니다. 모두 같은 값으로 시작하면 뉴런들이 똑같이 움직이므로 서로 다른 작은 값에서 시작합니다.", caution: "가중치를 전부 0으로 시작하면 같은 층의 뉴런들이 서로 다른 특징을 배우기 어렵습니다." },
+  { category: "ViT·학습 전략", pattern: /L1|L2|Dropout|정규화|augmentation|학습률|Cosine|validation loss|early stopping/, concept: "쉽게 말하면, 정규화와 데이터 증강은 답을 통째로 외우지 못하게 다양한 연습을 시키는 방법입니다. 조기 종료는 모의고사 점수가 나빠지기 시작할 때 학습을 멈추는 방법입니다.", caution: "훈련 점수만 계속 좋아지고 검증 점수가 나빠지면 외우기만 하고 있을 가능성이 큽니다." },
+];
+
 function expandExplanation(question: Question): string {
   if (!detailedExplanationCategories.has(question.category)) return question.explanation;
 
   const searchable = `${question.question} ${question.answer} ${question.explanation}`;
-  const matched = explanationGuides.findLast(
+  const matched = easyExplanationGuides.findLast(
     (guide) => guide.category === question.category && guide.pattern.test(searchable),
   );
-  const guide = matched ?? categoryExplanationFallback[question.category];
+  const technicalFallback = explanationGuides.findLast(
+    (guide) => guide.category === question.category && guide.pattern.test(searchable),
+  );
+  const guide = matched
+    ?? easyCategoryExplanation[question.category]
+    ?? technicalFallback
+    ?? categoryExplanationFallback[question.category];
 
   return [
     question.explanation,
