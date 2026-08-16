@@ -12,7 +12,7 @@
     "build:pages": "vite build --config vite.pages.config.ts",
     "start": "vinext start",
     "test": "node --test tests/grading.test.mjs tests/question-bank.test.mjs tests/pdf-asset.test.mjs tests/essay-reveal.test.mjs tests/site-title.test.mjs && npm run build",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern dist-pages --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

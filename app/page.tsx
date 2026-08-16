@@ -52,6 +52,9 @@ const categories: Category[] = [
   "ViT·학습 전략",
 ];
 
+const defaultCategories: Category[] = categories.slice(3);
+const showSummaryResource = false;
+
 const kinds: Kind[] = ["객관식", "단답형", "서술형"];
 const difficulties: Difficulty[] = ["기초", "핵심", "사고형", "고난도"];
 
@@ -1781,7 +1784,7 @@ function readStoredArray<T>(key: string): T[] {
 
 export default function Home() {
   const [view, setView] = useState<"home" | "exam" | "result">("home");
-  const [selected, setSelected] = useState<Category[]>(categories);
+  const [selected, setSelected] = useState<Category[]>(defaultCategories);
   const [selectedKinds, setSelectedKinds] = useState<Kind[]>(kinds);
   const [selectedDifficulties, setSelectedDifficulties] = useState<Difficulty[]>(difficulties);
   const [count, setCount] = useState<QuestionCount>(20);
@@ -2503,18 +2506,20 @@ export default function Home() {
           <span>문항 수·제한 시간·난이도는 사이트의 연습 설정이며 공식 평가 기준이 아닙니다.</span>
         </div>
 
-        <a
-          className="summary-resource-banner"
-          href={`${import.meta.env.BASE_URL}ai-python-core-summary.pdf`}
-          download="AI_Python_핵심정리.pdf"
-        >
-          <span className="summary-resource-icon">PDF</span>
-          <span className="summary-resource-copy">
-            <small>전체 범위 핵심정리</small>
-            <strong>AI·Python 핵심 개념 정리본</strong>
-          </span>
-          <span className="summary-resource-action">PDF 내려받기 <b>↓</b></span>
-        </a>
+        {showSummaryResource && (
+          <a
+            className="summary-resource-banner"
+            href={`${import.meta.env.BASE_URL}ai-python-core-summary.pdf`}
+            download="AI_Python_핵심정리.pdf"
+          >
+            <span className="summary-resource-icon">PDF</span>
+            <span className="summary-resource-copy">
+              <small>전체 범위 핵심정리</small>
+              <strong>AI·Python 핵심 개념 정리본</strong>
+            </span>
+            <span className="summary-resource-action">PDF 내려받기 <b>↓</b></span>
+          </a>
+        )}
 
         <div className="setup-grid">
           <div className="setup-card wide">

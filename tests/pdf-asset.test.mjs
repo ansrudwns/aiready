@@ -16,6 +16,7 @@ test("핵심정리 PDF가 유효한 정적 다운로드 파일로 포함된다",
   assert.equal(bytes.subarray(0, 5).toString("ascii"), "%PDF-");
   assert.match(page, /href=\{`\$\{import\.meta\.env\.BASE_URL\}ai-python-core-summary\.pdf`\}/);
   assert.match(page, /download="AI_Python_핵심정리\.pdf"/);
+  assert.match(page, /const showSummaryResource = false;/);
 });
 
 test("PDF 원고는 9개 영역을 포함하고 자료 식별자를 노출하지 않는다", async () => {

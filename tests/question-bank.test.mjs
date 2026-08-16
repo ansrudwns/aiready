@@ -23,6 +23,7 @@ async function loadQuestionBank() {
 }
 
 const questionBank = await loadQuestionBank();
+const pageUrl = new URL("../app/page.tsx", import.meta.url);
 const categories = new Set([
   "Python·API·JSON",
   "NumPy·Pandas",
@@ -34,6 +35,12 @@ const categories = new Set([
   "CNN·이미지 모델",
   "ViT·학습 전략",
 ]);
+
+test("초기 출제 범위는 AI 영역 6개만 선택한다", async () => {
+  const page = await readFile(pageUrl, "utf8");
+  assert.match(page, /const defaultCategories: Category\[\] = categories\.slice\(3\);/);
+  assert.match(page, /useState<Category\[\]>\(defaultCategories\)/);
+});
 const kinds = new Set(["객관식", "단답형", "서술형"]);
 const difficulties = new Set(["기초", "핵심", "사고형", "고난도"]);
 
