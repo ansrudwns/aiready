@@ -50,13 +50,13 @@ test("기본 활성화 AI 6개 영역은 모든 유형에 상세 해설을 제�
   assert.equal(inactiveQuestions.length, 72);
   assert.deepEqual(new Set(activeQuestions.map((question) => question.kind)), new Set(["객관식", "단답형", "서술형"]));
   for (const question of activeQuestions) {
-    for (const heading of ["정답과 직접 근거", "풀이 과정", "핵심 개념", "헷갈리기 쉬운 점"]) {
-      assert.match(question.explanation, new RegExp(heading), `${question.id}: ${heading} 누락`);
-    }
-    assert.ok(question.explanation.length >= 400, `${question.id}: 상세 해설이 충분하지 않음`);
+    assert.match(question.explanation, /\n\n주의\n/, `${question.id}: 주의 설명 누락`);
+    assert.doesNotMatch(question.explanation, /정답과 직접 근거|풀이 과정|핵심 개념|헷갈리기 쉬운 점/,
+      `${question.id}: 불필요한 세부 제목이 남음`);
+    assert.ok(question.explanation.length >= 250, `${question.id}: 상세 해설이 충분하지 않음`);
   }
   for (const question of inactiveQuestions) {
-    assert.doesNotMatch(question.explanation, /정답과 직접 근거|풀이 과정|헷갈리기 쉬운 점/,
+    assert.doesNotMatch(question.explanation, /\n\n주의\n/,
       `${question.id}: 기본 비활성화 영역이 상세 해설 대상에 포함됨`);
   }
 });

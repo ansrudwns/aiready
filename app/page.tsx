@@ -1648,47 +1648,37 @@ function expandExplanation(question: Question): string {
   if (!detailedExplanationCategories.has(question.category)) return question.explanation;
 
   const searchable = `${question.question} ${question.answer} ${question.explanation}`;
-  const matched = explanationGuides.find(
+  const matched = explanationGuides.findLast(
     (guide) => guide.category === question.category && guide.pattern.test(searchable),
   );
   const guide = matched ?? categoryExplanationFallback[question.category];
-  const answerLead = question.kind === "서술형"
-    ? "모범답안은 결론만 나열하지 않고 핵심 원리, 비교 기준과 적용 시 주의점이 서로 이어져야 합니다."
-    : `정답은 “${question.answer}”입니다.`;
-  const solvingProcess = question.code
-    ? "코드와 수식은 입력값과 shape를 먼저 적고, 실행 순서에 따라 중간값을 계산한 뒤 반환값과 실제로 변경된 값을 분리해 확인합니다. 마지막에는 문제에서 요구한 출력 형식과 단위를 그대로 맞춥니다."
-    : question.kind === "객관식"
-      ? "먼저 질문이 요구하는 판단 기준을 한 문장으로 정리한 다음 각 보기가 그 기준을 만족하는지 확인합니다. ‘항상’, ‘완전히’, ‘자동으로’처럼 지나치게 강한 표현은 반례가 없는지도 점검합니다."
-      : question.kind === "단답형"
-        ? "질문에서 요구한 대상이 값, 수식, shape, 함수명 중 무엇인지 먼저 구분합니다. 계산 근거를 확인한 뒤 답안에는 요구된 표기만 남기고 대소문자, 괄호, 쉼표와 공백을 맞춥니다."
-        : "답안은 결론을 먼저 제시하고, 왜 그런지 작동 원리를 설명한 뒤 비교 대상이나 한계, 실제 적용 시 확인할 조건을 덧붙이는 순서로 구성하면 누락을 줄일 수 있습니다.";
 
   return [
-    `정답과 직접 근거\n${answerLead} ${question.explanation}`,
-    `풀이 과정\n${solvingProcess}`,
-    `핵심 개념\n${guide?.concept ?? "문제의 입력, 변환 과정, 출력과 평가 기준을 분리해서 연결하면 같은 개념의 변형 문제에도 적용할 수 있습니다."}`,
-    `헷갈리기 쉬운 점\n${guide?.caution ?? "용어가 비슷하더라도 목적과 계산 시점이 다를 수 있으므로 정의, 입력, 출력과 사용 단계를 함께 비교하세요."}`,
+    question.explanation,
+    guide?.concept ?? "문제의 입력, 변환 과정, 출력과 평가 기준을 분리해서 연결하면 같은 개념의 변형 문제에도 적용할 수 있습니다.",
+    `주의\n${guide?.caution ?? "용어가 비슷하더라도 목적과 계산 시점이 다를 수 있으므로 정의, 입력, 출력과 사용 단계를 함께 비교하세요."}`,
   ].join("\n\n");
 }
 
 function ExplanationContent({ text }: { text: string }) {
-  const sections = text.split("\n\n").map((section) => {
-    const [heading, ...body] = section.split("\n");
-    return { heading, body: body.join("\n") };
-  });
+  const paragraphs = text.split("\n\n");
+  const caution = paragraphs.at(-1)?.startsWith("주의\n")
+    ? paragraphs.pop()?.slice("주의\n".length)
+    : undefined;
 
-  if (sections.length === 1 || sections.some((section) => !section.body)) {
+  if (!caution) {
     return <span className="explanation-copy">{text}</span>;
   }
 
   return (
-    <span className="detailed-explanation">
-      {sections.map((section) => (
-        <span className="explanation-section" key={section.heading}>
-          <strong>{section.heading}</strong>
-          <span>{section.body}</span>
-        </span>
-      ))}
+    <span className="explanation-flow">
+      <span className="explanation-main">
+        {paragraphs.map((paragraph) => <span key={paragraph}>{paragraph}</span>)}
+      </span>
+      <span className="explanation-caution">
+        <strong>주의</strong>
+        <span>{caution}</span>
+      </span>
     </span>
   );
 }
