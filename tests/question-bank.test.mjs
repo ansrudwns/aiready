@@ -34,22 +34,23 @@ const categories = new Set([
   "LLM·평가·안전",
   "CNN·이미지 모델",
   "ViT·학습 전략",
+  "파운데이션·VLM",
 ]);
 
-test("초기 출제 범위는 AI 영역 6개만 선택한다", async () => {
+test("초기 출제 범위는 AI 영역 7개만 선택한다", async () => {
   const page = await readFile(pageUrl, "utf8");
   assert.match(page, /const defaultCategories: Category\[\] = categories\.slice\(3\);/);
   assert.match(page, /useState<Category\[\]>\(defaultCategories\)/);
 });
 
-test("기본 활성화 AI 6개 영역은 모든 유형에 상세 해설을 제공한다", () => {
+test("기본 활성화 AI 7개 영역은 모든 유형에 상세 해설을 제공한다", () => {
   const activeCategories = new Set([...categories].slice(3));
   const activeQuestions = questionBank.filter((question) => activeCategories.has(question.category));
   const inactiveQuestions = questionBank.filter((question) => !activeCategories.has(question.category));
-  assert.equal(activeQuestions.length, 156);
+  assert.equal(activeQuestions.length, 180);
   assert.equal(inactiveQuestions.length, 72);
-  assert.equal(Object.keys(explanationNotes).length, 156);
-  assert.equal(new Set(Object.values(explanationNotes)).size, 156);
+  assert.equal(Object.keys(explanationNotes).length, 180);
+  assert.equal(new Set(Object.values(explanationNotes)).size, 180);
   assert.deepEqual(new Set(activeQuestions.map((question) => question.kind)), new Set(["객관식", "단답형", "서술형"]));
   for (const question of activeQuestions) {
     const rawQuestion = rawPracticeQuestionBank.find((item) => item.id === question.id);
@@ -100,10 +101,10 @@ test("객관식 오답 채점 후 선택한 오답과 실제 정답 선택지를
 const kinds = new Set(["객관식", "단답형", "서술형"]);
 const difficulties = new Set(["기초", "핵심", "사고형", "고난도"]);
 
-test("228개 변형 문항과 9개 영역이 모두 있다", () => {
-  assert.equal(questionBank.length, 228);
+test("252개 변형 문항과 10개 영역이 모두 있다", () => {
+  assert.equal(questionBank.length, 252);
   assert.deepEqual(new Set(questionBank.map((question) => question.category)), categories);
-  assert.equal(new Set(questionBank.map((question) => question.id)).size, 228);
+  assert.equal(new Set(questionBank.map((question) => question.id)).size, 252);
   for (const category of categories) {
     const expectedCount = ["ML 기초·검증", "회귀·신경망"].includes(category) ? 30 : 24;
     assert.equal(questionBank.filter((question) => question.category === category).length, expectedCount,
@@ -112,7 +113,7 @@ test("228개 변형 문항과 9개 영역이 모두 있다", () => {
 });
 
 test("모든 영역의 보강 문항 21~24가 포함된다", () => {
-  for (const prefix of ["py", "np", "viz", "ml", "nn", "nlp", "llm", "cnn", "vit"]) {
+  for (const prefix of ["py", "np", "viz", "ml", "nn", "nlp", "llm", "cnn", "vit", "fm"]) {
     for (const number of [21, 22, 23, 24]) {
       assert.ok(questionBank.some((question) => question.id === `${prefix}-${number}`),
         `${prefix}-${number}: 보강 문항 누락`);
