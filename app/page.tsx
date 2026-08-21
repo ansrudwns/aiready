@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { checkShortAnswer } from "../src/grading.js";
 import { choiceBalanceOverrides } from "./choice-balance-overrides";
 import { foundationExplanationNotes, foundationQuestions } from "./foundation-questions";
+import { hintExamTopics, hintExplanationNotes, hintSupplementQuestions } from "./hint-exam-questions";
 import { visionQuestions } from "./vision-questions";
 
 type Kind = "객관식" | "단답형" | "서술형";
@@ -1724,6 +1725,7 @@ void easyExplanationGuides;
 
 const explanationNotes: Record<string, string> = {
   ...foundationExplanationNotes,
+  ...hintExplanationNotes,
   "ml-01": "포함 관계는 큰 범주에서 작은 범주로 읽으면 됩니다. AI에는 사람이 정한 규칙으로 작동하는 방식도 포함되고, ML은 데이터에서 규칙을 학습하는 AI, DL은 여러 층의 신경망을 사용하는 ML입니다.",
   "ml-02": "판단 기준은 예측 결과의 형태입니다. 결과가 가격처럼 연속된 숫자이면 회귀이고, 양성·음성처럼 미리 정한 종류 중 하나이면 분류입니다.",
   "ml-03": "분모 TP+FP는 모델이 양성이라고 판정한 전체 40건입니다. 그중 실제 양성인 TP가 30건이므로 30÷40=0.75이며, 이는 양성 판정 100건 중 약 75건이 맞는다는 뜻입니다.",
@@ -2098,6 +2100,7 @@ const rawPracticeQuestionBank: Question[] = [
   Q("llm-22", "LLM·평가·안전", "객관식", "사고형", "모호성을 줄이는 프롬프트 구성으로 가장 적절한 것은?", "역할·작업·입력 경계·제약·출력 형식과 필요한 예시를 구분해 제시한다.", "좋은 프롬프트는 해야 할 일과 제공 데이터, 금지 사항, 출력 schema를 분리합니다. few-shot 예시는 실제 입력과 유사하고 정답 형식이 일관되어야 합니다.", undefined, ["역할·작업·입력 경계·제약·출력 형식과 필요한 예시를 구분해 제시한다.", "서로 충돌하는 지시를 설명 없이 반복한다.", "입력 데이터와 명령을 구분하지 않는다.", "원하는 출력 형식을 숨긴다."]),
   Q("llm-23", "LLM·평가·안전", "객관식", "고난도", "jailbreaking에 대한 설명과 대응의 연결로 옳은 것은?", "안전 제약을 우회하도록 모델을 유도하는 공격이며 권한 제한·입력 분리·출력 검증·공격 평가를 함께 적용한다.", "jailbreak는 역할극, 인코딩, 다단계 지시 등으로 모델의 안전 행동을 우회하려는 입력입니다. 단일 금지 문구로 완전히 막기 어려워 도구 권한, 검증, 모니터링과 반복 평가가 필요합니다.", undefined, ["안전 제약을 우회하도록 모델을 유도하는 공격이며 권한 제한·입력 분리·출력 검증·공격 평가를 함께 적용한다.", "모델 크기를 측정하는 정상 benchmark다.", "temperature를 0으로 하면 모든 jailbreak가 완전히 차단된다.", "학습 데이터의 중복을 제거하는 전처리만 뜻한다."]),
   Q("llm-24", "LLM·평가·안전", "객관식", "사고형", "LLM 평가 설계를 구성하는 핵심 세 요소의 연결로 가장 적절한 것은?", "대표성 있는 평가 데이터, 목적에 맞는 지표, 재현 가능한 평가 프로토콜", "평가 점수는 문항 분포, metric 정의, prompt와 decoding 및 채점 절차에 따라 달라집니다. 세 요소를 함께 고정하고 오류 유형과 신뢰구간도 확인해야 비교가 의미 있습니다.", undefined, ["대표성 있는 평가 데이터, 목적에 맞는 지표, 재현 가능한 평가 프로토콜", "모델 이름, 로고 색상, 파일 확장자", "학습률, 브라우저 크기, 운영체제 이름", "token 하나, 정답 하나, 평가자 없음"]),
+  ...hintSupplementQuestions as Question[],
   ...visionQuestions as Question[],
   ...foundationQuestions as Question[],
 ];
@@ -2110,6 +2113,10 @@ const questionBank: Question[] = rawPracticeQuestionBank.map((question) => {
     explanation: expandExplanation(question),
   };
 });
+
+const hintExamQuestions: Question[] = hintExamTopics
+  .map(({ id }) => questionBank.find((question) => question.id === id))
+  .filter((question): question is Question => Boolean(question));
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -2254,7 +2261,10 @@ export default function Home() {
   const gradedResults = results.filter((item) => item.graded);
   const score = gradedResults.filter((item) => item.correct).length;
 
-  function startExam(targetQuestions?: Question[]) {
+  function startExam(
+    targetQuestions?: Question[],
+    options?: { allTargets?: boolean; fixedMinutes?: number | null },
+  ) {
     const available = questionBank.filter(
       (q) =>
         selected.includes(q.category) &&
@@ -2264,7 +2274,11 @@ export default function Home() {
     const requestedCount = count === "all" ? available.length : count;
     let next: Question[];
     if (targetQuestions) {
-      const targetCount = count === "all" ? targetQuestions.length : count;
+      const targetCount = options?.allTargets
+        ? targetQuestions.length
+        : count === "all"
+          ? targetQuestions.length
+          : count;
       next = shuffle(targetQuestions).slice(0, Math.min(targetCount, targetQuestions.length));
     } else if (requestedCount === 30 && selectedKinds.length === kinds.length) {
       const quotas: Record<Kind, number> = { 객관식: 18, 단답형: 8, 서술형: 4 };
@@ -2327,7 +2341,15 @@ export default function Home() {
     setAnswers({});
     setRevealedIds([]);
     setCurrent(0);
-    setSeconds(minutes === null ? null : minutes * 60);
+    setSeconds(
+      options && "fixedMinutes" in options
+        ? options.fixedMinutes === null
+          ? null
+          : options.fixedMinutes * 60
+        : minutes === null
+          ? null
+          : minutes * 60,
+    );
     setSubmitted(false);
     setView("exam");
   }
@@ -2887,6 +2909,22 @@ export default function Home() {
           <span>서술형은 질문이 요구한 결론과 이유를 빠짐없이 작성한 뒤 모범답안과 비교합니다.</span>
           <span>문항 수·제한 시간·난이도는 사이트의 연습 설정이며 공식 평가 기준이 아닙니다.</span>
         </div>
+
+        <section className="hint-exam-card" aria-labelledby="hint-exam-title">
+          <div>
+            <small>출제 안내 범위</small>
+            <strong id="hint-exam-title">힌트 모의고사</strong>
+            <p>안내된 32개 토픽을 한 문제씩 점검합니다.</p>
+          </div>
+          <span>32문항 · 60분</span>
+          <button
+            onClick={() =>
+              startExam(hintExamQuestions, { allTargets: true, fixedMinutes: 60 })
+            }
+          >
+            힌트 모의고사 시작
+          </button>
+        </section>
 
         {showSummaryResource && (
           <a

@@ -575,6 +575,42 @@ footer p, footer > span { font-size: 12px; color: rgba(255,255,255,.55); }
 }
 .exam-guidance strong { grid-row: 1 / -1; align-self: center; color: var(--green-dark); }
 .exam-guidance span { color: #665d48; }
+.hint-exam-card {
+  margin: 0 0 22px;
+  padding: 20px 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid #b89438;
+  border-radius: 16px;
+  background: #fff8e3;
+}
+.hint-exam-card div { display: grid; gap: 4px; }
+.hint-exam-card small { color: #8a650f; font-size: 11px; font-weight: 850; }
+.hint-exam-card strong { font-size: 21px; letter-spacing: -.03em; }
+.hint-exam-card p { margin: 0; color: #665d48; font-size: 13px; line-height: 1.55; }
+.hint-exam-card > span {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #f1e3b9;
+  color: #654b0e;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+.hint-exam-card button {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #74540d;
+  border-radius: 10px;
+  background: #74540d;
+  color: white;
+  font-size: 13px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+.hint-exam-card button:hover { background: #5f450b; }
 .compact-filter-card { padding-bottom: 18px; }
 .filter-groups { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
 .filter-groups > div > small {
@@ -637,6 +673,9 @@ footer { display: none; }
   .category-select { grid-template-columns: 1fr; }
   .exam-guidance { grid-template-columns: 1fr; }
   .exam-guidance strong { grid-row: auto; }
+  .hint-exam-card { grid-template-columns: 1fr; gap: 14px; }
+  .hint-exam-card > span { justify-self: start; }
+  .hint-exam-card button { width: 100%; }
   .filter-groups { grid-template-columns: 1fr; }
   .start-banner { align-items: stretch; flex-direction: column; gap: 18px; }
   .start-banner > strong { text-align: center; }

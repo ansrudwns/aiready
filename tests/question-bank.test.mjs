@@ -8,7 +8,7 @@ async function loadQuestionBank() {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   const result = await build({
     stdin: {
-      contents: `${source}\nexport { questionBank, rawPracticeQuestionBank, explanationNotes };`,
+      contents: `${source}\nexport { questionBank, rawPracticeQuestionBank, explanationNotes, hintExamQuestions, hintExamTopics };`,
       loader: "tsx",
       resolveDir: fileURLToPath(new URL("../app", import.meta.url)),
       sourcefile: "page.tsx",
@@ -22,7 +22,13 @@ async function loadQuestionBank() {
   return await import(moduleUrl);
 }
 
-const { questionBank, rawPracticeQuestionBank, explanationNotes } = await loadQuestionBank();
+const {
+  questionBank,
+  rawPracticeQuestionBank,
+  explanationNotes,
+  hintExamQuestions,
+  hintExamTopics,
+} = await loadQuestionBank();
 const pageUrl = new URL("../app/page.tsx", import.meta.url);
 const categories = new Set([
   "Python·API·JSON",
@@ -47,10 +53,10 @@ test("기본 활성화 AI 7개 영역은 모든 유형에 상세 해설을 제�
   const activeCategories = new Set([...categories].slice(3));
   const activeQuestions = questionBank.filter((question) => activeCategories.has(question.category));
   const inactiveQuestions = questionBank.filter((question) => !activeCategories.has(question.category));
-  assert.equal(activeQuestions.length, 180);
+  assert.equal(activeQuestions.length, 186);
   assert.equal(inactiveQuestions.length, 72);
-  assert.equal(Object.keys(explanationNotes).length, 180);
-  assert.equal(new Set(Object.values(explanationNotes)).size, 180);
+  assert.equal(Object.keys(explanationNotes).length, 186);
+  assert.equal(new Set(Object.values(explanationNotes)).size, 186);
   assert.deepEqual(new Set(activeQuestions.map((question) => question.kind)), new Set(["객관식", "단답형", "서술형"]));
   for (const question of activeQuestions) {
     const rawQuestion = rawPracticeQuestionBank.find((item) => item.id === question.id);
@@ -101,15 +107,45 @@ test("객관식 오답 채점 후 선택한 오답과 실제 정답 선택지를
 const kinds = new Set(["객관식", "단답형", "서술형"]);
 const difficulties = new Set(["기초", "핵심", "사고형", "고난도"]);
 
-test("252개 변형 문항과 10개 영역이 모두 있다", () => {
-  assert.equal(questionBank.length, 252);
+test("258개 변형 문항과 10개 영역이 모두 있다", () => {
+  assert.equal(questionBank.length, 258);
   assert.deepEqual(new Set(questionBank.map((question) => question.category)), categories);
-  assert.equal(new Set(questionBank.map((question) => question.id)).size, 252);
+  assert.equal(new Set(questionBank.map((question) => question.id)).size, 258);
+  const expectedCounts = {
+    "Python·API·JSON": 24,
+    "NumPy·Pandas": 24,
+    "시각화·EDA": 24,
+    "ML 기초·검증": 30,
+    "회귀·신경망": 30,
+    "NLP·Transformer": 25,
+    "LLM·평가·안전": 26,
+    "CNN·이미지 모델": 24,
+    "ViT·학습 전략": 27,
+    "파운데이션·VLM": 24,
+  };
   for (const category of categories) {
-    const expectedCount = ["ML 기초·검증", "회귀·신경망"].includes(category) ? 30 : 24;
+    const expectedCount = expectedCounts[category];
     assert.equal(questionBank.filter((question) => question.category === category).length, expectedCount,
       `${category}: 영역별 ${expectedCount}문항이 아님`);
   }
+});
+
+test("힌트 모의고사는 안내된 32개 토픽을 한 문항씩 고정 출제한다", async () => {
+  const page = await readFile(pageUrl, "utf8");
+  assert.equal(hintExamTopics.length, 32);
+  assert.equal(hintExamQuestions.length, 32);
+  assert.equal(new Set(hintExamTopics.map(({ topic }) => topic)).size, 32);
+  assert.equal(new Set(hintExamTopics.map(({ id }) => id)).size, 32);
+  assert.deepEqual(
+    new Set(hintExamQuestions.map(({ id }) => id)),
+    new Set(hintExamTopics.map(({ id }) => id)),
+  );
+  assert.deepEqual(
+    new Set(hintExamQuestions.map(({ kind }) => kind)),
+    new Set(["객관식", "단답형", "서술형"]),
+  );
+  assert.match(page, /힌트 모의고사 시작/);
+  assert.match(page, /startExam\(hintExamQuestions, \{ allTargets: true, fixedMinutes: 60 \}\)/);
 });
 
 test("모든 영역의 보강 문항 21~24가 포함된다", () => {
