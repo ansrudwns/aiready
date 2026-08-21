@@ -157,8 +157,9 @@ test("힌트 모의고사 5회는 안내된 32개 토픽을 서로 다른 문항
   }
   assert.equal(new Set(hintExamQuestionSets.flat().map(({ id }) => id)).size, 160);
   assert.ok(!hintSupplementQuestions.some(({ topic }) => topic === "지식 학습"));
-  assert.match(page, /회차별 32문항 · 60분/);
-  assert.match(page, /startExam\(set, \{ allTargets: true, fixedMinutes: 60 \}\)/);
+  assert.match(page, /회차별 32문항/);
+  assert.doesNotMatch(page, /회차별 32문항 · 60분/);
+  assert.match(page, /startExam\(set, \{ allTargets: true, fixedMinutes: null \}\)/);
   assert.match(page, /\{index \+ 1\}회 시작/);
 });
 

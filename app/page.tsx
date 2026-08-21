@@ -2923,12 +2923,12 @@ export default function Home() {
             <strong id="hint-exam-title">힌트 모의고사</strong>
             <p>안내된 32개 토픽을 한 문제씩 점검합니다.</p>
           </div>
-          <span>회차별 32문항 · 60분</span>
+          <span>회차별 32문항</span>
           <div className="hint-exam-actions" aria-label="힌트 모의고사 회차 선택">
             {hintExamQuestionSets.map((set, index) => (
               <button
                 key={index}
-                onClick={() => startExam(set, { allTargets: true, fixedMinutes: 60 })}
+                onClick={() => startExam(set, { allTargets: true, fixedMinutes: null })}
               >
                 {index + 1}회 시작
               </button>
