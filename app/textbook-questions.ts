@@ -676,6 +676,6 @@ export const textbookExplanationNotes: Record<string, string> =
   Object.fromEntries(
     textbookQuestions.map((question, index) => [
       question.id,
-      `교재 확인문제 ${index + 1}에서는 지문의 핵심 조건과 정답의 근거를 함께 확인해야 한다. 정답은 ${question.answer}이다. 비슷한 용어를 고를 때는 입력, 출력, 학습 과정과 적용 조건 중 무엇을 묻는지 먼저 구분한다.`,
+      `교재 확인문제 ${index + 1}에서는 지문의 핵심 조건과 정답의 근거를 함께 확인해야 한다.\n\n정답: ${question.answer}\n\n비슷한 용어를 고를 때는 입력, 출력, 학습 과정과 적용 조건 중 무엇을 묻는지 먼저 구분한다.`,
     ]),
   );

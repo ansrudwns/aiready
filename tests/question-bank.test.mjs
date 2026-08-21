@@ -289,6 +289,32 @@ test("힌트 객관식 선택지는 서로 다른 판단을 한 문장씩 제시
   }
 });
 
+test("지문과 해설에 조사 충돌이나 반복 번역투가 남아 있지 않다", () => {
+  const awkwardPatterns = [
+    /[다요]\.[은는이가을를와과으로며]/,
+    /의 적용 또는 해석으로/,
+    /연결로 (?:옳은|적절한|알맞은)/,
+    /결과 shape로/,
+    /무엇이 결정하는가/,
+    /학습으로 가능한/,
+    /더 적은 bit로/,
+    /일반적 구조 특징/,
+  ];
+  for (const question of questionBank) {
+    const fields = [
+      ["지문", question.question],
+      ["정답", question.answer],
+      ["해설", question.explanation],
+      ...(question.choices ?? []).map((choice, index) => [`선택지 ${index + 1}`, choice]),
+    ];
+    for (const [label, value] of fields) {
+      for (const pattern of awkwardPatterns) {
+        assert.doesNotMatch(value, pattern, `${question.id} ${label}: 어색한 문장 ${pattern}`);
+      }
+    }
+  }
+});
+
 test("서술형 지문에는 글자 수 조건이 없고 모범답안은 충분히 구체적이다", () => {
   const essays = questionBank.filter((question) => question.kind === "서술형");
   assert.ok(essays.length >= 7);

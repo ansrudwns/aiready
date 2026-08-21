@@ -2110,10 +2110,29 @@ const rawPracticeQuestionBank: Question[] = [
   ...foundationQuestions as Question[],
 ];
 
+const koreanQuestionCorrections: Record<string, string> = {
+  "np-14": "다음 연산이 가능한 이유와 결과 shape에 대한 설명으로 옳은 것은?",
+  "ml-09": "스팸 메일 분류에서 feature와 label을 올바르게 연결한 것은?",
+  "ml-15": "혼동행렬 지표를 올바르게 연결한 것은?",
+  "nlp-15": "GRU가 LSTM과 비교해 갖는 일반적인 구조적 특징은?",
+  "nlp-19": "BERT의 기본 구조와 적합한 작업을 올바르게 연결한 것은?",
+  "llm-17": "생성 평가 지표와 용도를 올바르게 연결한 것은?",
+  "llm-23": "jailbreaking에 대한 설명과 대응을 올바르게 연결한 것은?",
+  "llm-24": "LLM 평가 설계를 구성하는 핵심 세 요소를 가장 적절하게 묶은 것은?",
+  "cnn-06": "입력 텐서가 N×Cin×H×W이고 커널이 Cout×Cin×Kh×Kw일 때 출력 채널 수는 무엇으로 결정되는가?",
+  "cnn-13": "AlexNet·VGG류 모델에서 activation memory와 파라미터가 주로 집중되는 위치를 올바르게 연결한 것은?",
+  "vit-08": "DeiT식 distillation에서 teacher와 student의 역할을 올바르게 연결한 것은?",
+  "vit-16": "Xavier 초기화와 He 초기화의 용도를 올바르게 연결한 것은?",
+  "fm-02": "Zero-shot, Few-shot, Fine-tuning의 특징을 올바르게 연결한 것은?",
+  "fm-10": "LLaVA의 사전학습 단계에서 주로 학습하는 부분과 목적을 올바르게 연결한 것은?",
+  "fm-18": "Diffusion 모델의 forward 과정과 backward 과정을 올바르게 설명한 것은?",
+};
+
 const questionBank: Question[] = rawPracticeQuestionBank.map((question) => {
   const override = choiceBalanceOverrides[question.id];
   return {
     ...question,
+    question: koreanQuestionCorrections[question.id] ?? question.question,
     ...(override ? { answer: override.answer, choices: override.choices } : {}),
     explanation: expandExplanation(question),
   };

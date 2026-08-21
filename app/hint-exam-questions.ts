@@ -317,7 +317,7 @@ const specs: TopicSpec[] = [
     key: "on-device-vlm", topic: "온디바이스 VLM", category: "파운데이션·VLM",
     definition: "작은 VLM은 제한된 메모리와 계산 자원의 장치에서 이미지와 언어를 함께 처리하도록 모델 크기와 실행 비용을 줄인다.",
     wrong: ["모든 입력을 항상 외부 서버로 보내 네트워크 의존성을 높이는 것이 목적이다.", "파라미터와 activation을 의도적으로 늘려 모바일 실행을 막는다.", "이미지 기능을 제거하고 파일 이름만 읽는 모델을 VLM이라 부른다."],
-    shortQuestion: "가중치를 더 적은 bit로 표현해 모델 크기와 메모리를 줄이는 기법을 작성하시오.", shortAnswer: "양자화",
+    shortQuestion: "가중치를 더 적은 비트 수로 표현해 모델 크기와 메모리를 줄이는 기법을 작성하시오.", shortAnswer: "양자화",
     application: "장치 내부 실행은 지연시간과 개인정보 전송을 줄일 수 있지만 성능, 배터리와 메모리 제약을 함께 고려해야 한다.",
     essayQuestion: "온디바이스 VLM이 필요한 이유와 모델을 경량화하는 방법, 발생 가능한 trade-off를 설명하시오.",
     essayAnswer: "서버 연결이 어렵거나 개인정보를 외부로 보내기 곤란한 환경에서는 장치 안에서 이미지와 언어를 처리할 필요가 있다. 이를 위해 작은 backbone과 language model, 지식 증류, pruning, 양자화, 효율적인 tokenizer를 사용할 수 있다. 모델과 activation memory가 줄어 지연시간과 통신 비용은 낮아지지만 낮은 정밀도와 작은 용량 때문에 정확도나 복잡한 추론 능력이 감소할 수 있어 실제 장치에서 측정해야 한다.",
@@ -350,7 +350,7 @@ const specs: TopicSpec[] = [
     wrong: ["학습이 끝나면 모든 관측의 ε를 정확히 0으로 만들 수 있다.", "f*는 훈련을 시작하기 전에 항상 정확히 알려진 함수다.", "ε의 평균이 0이면 각 관측의 오차도 반드시 모두 0이다."],
     shortQuestion: "Y=f*(X)+ε에서 관측할 수 없는 참 함수를 나타내는 기호를 작성하시오.", shortAnswer: "f*(X)",
     application: "E[ε]=0은 반복 관측의 오차가 한쪽으로 치우치지 않는다는 뜻이지 매 관측 오차가 0이라는 뜻은 아니다.",
-    essayQuestion: "Y=f*(X)+ε 모형에서 f*와 ε의 의미, 학습으로 가능한 것과 불가능한 것을 설명하시오.",
+    essayQuestion: "Y=f*(X)+ε 모형에서 f*와 ε의 의미, 학습을 통해 가능한 것과 불가능한 것을 설명하시오.",
     essayAnswer: "f*(X)는 같은 feature X에서 label Y가 평균적으로 어떻게 변하는지를 나타내는 미지의 참 관계다. ε는 측정 잡음이나 관측되지 않은 요인 때문에 개별 관측이 그 평균 관계에서 벗어나는 부분이다. 학습은 유한한 데이터로 f*에 가까운 함수 f를 추정해 새 입력을 예측하고 중요한 feature 관계를 이해할 수 있다. 그러나 이미 포함된 개별 측정오차를 모두 식별하거나 제거할 수는 없다.",
     caution: "오차 평균 0과 오차 없음은 다르며 irreducible error 때문에 완벽한 f*를 알아도 개별 Y 예측에는 불확실성이 남는다.",
     bookQuestion: { question: "다음 중 미지의 참 함수 f*(X)를 학습하는 이유로 적절하지 않은 것은?", choices: ["feature와 label의 관계를 알기 위해", "모든 데이터의 측정오차 ε를 제거하기 위해", "새 입력의 목표값을 예측하기 위해", "중요한 feature와 변화 방향을 알기 위해"], answer: "모든 데이터의 측정오차 ε를 제거하기 위해" },
@@ -393,9 +393,9 @@ const makeVariants = (spec: TopicSpec): HintQuestion[] => {
   return [
     { id: `hint5-${spec.key}-1`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "핵심", question: first.question, choices: first.choices, answer: first.answer, explanation: `${spec.definition} ${spec.caution}` },
     { id: `hint5-${spec.key}-2`, topic: spec.topic, category: spec.category, kind: "단답형", difficulty: "핵심", question: spec.shortQuestion, answer: spec.shortAnswer, explanation: `${spec.definition} ${spec.application} ${spec.caution}` },
-    { id: `hint5-${spec.key}-3`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "사고형", question: `${spec.topic}의 적용 또는 해석으로 가장 적절한 것은?`, choices: [applicationAnswer, spec.wrong[0], spec.wrong[1], spec.wrong[2]], answer: applicationAnswer, explanation: `${spec.application} ${spec.definition} ${spec.caution}` },
+    { id: `hint5-${spec.key}-3`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "사고형", question: `${spec.topic}에 관한 다음 설명 중 실제 적용이나 해석에 가장 적절한 것은?`, choices: [applicationAnswer, spec.wrong[0], spec.wrong[1], spec.wrong[2]], answer: applicationAnswer, explanation: `${spec.application} ${spec.definition} ${spec.caution}` },
     { id: `hint5-${spec.key}-4`, topic: spec.topic, category: spec.category, kind: "서술형", difficulty: "고난도", question: spec.essayQuestion, answer: spec.essayAnswer, explanation: `${spec.essayAnswer}\n\n${spec.caution}` },
-    { id: `hint5-${spec.key}-5`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "사고형", question: `${spec.topic}에 대한 설명으로 옳지 않은 것은?`, choices: [spec.definition, spec.application, spec.caution, incorrectAnswer], answer: incorrectAnswer, explanation: `${incorrectAnswer}는 옳지 않다. ${spec.definition} ${spec.caution}` },
+    { id: `hint5-${spec.key}-5`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "사고형", question: `${spec.topic}에 대한 설명으로 옳지 않은 것은?`, choices: [spec.definition, spec.application, spec.caution, incorrectAnswer], answer: incorrectAnswer, explanation: `다음 설명은 옳지 않다.\n\n${incorrectAnswer}\n\n${spec.definition} ${spec.caution}` },
   ];
 };
 
@@ -425,6 +425,6 @@ export const hintExamSets: HintQuestion[][] = Array.from({ length: 5 }, (_, exam
 export const hintExplanationNotes: Record<string, string> = Object.fromEntries(
   hintSupplementQuestions.map((question) => [
     question.id,
-    `${question.topic} 문항에서는 정의만 외우기보다 입력과 출력, 학습 신호, 계산 순서와 적용 조건을 함께 구분해야 한다. 이 문항의 정답은 ${question.answer}이며, 지문의 조건을 바꾸면 같은 용어라도 결론이 달라질 수 있다.`,
+    `${question.topic} 문항에서는 정의만 외우기보다 입력과 출력, 학습 신호, 계산 순서와 적용 조건을 함께 구분해야 한다.\n\n정답: ${question.answer}\n\n지문의 조건을 바꾸면 같은 용어라도 결론이 달라질 수 있다.`,
   ]),
 );
