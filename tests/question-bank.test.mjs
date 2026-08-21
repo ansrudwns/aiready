@@ -8,7 +8,7 @@ async function loadQuestionBank() {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   const result = await build({
     stdin: {
-      contents: `${source}\nexport { questionBank, rawPracticeQuestionBank, explanationNotes, hintExamQuestionSets, hintExamSets, hintSupplementQuestions };`,
+      contents: `${source}\nexport { questionBank, rawPracticeQuestionBank, explanationNotes, hintExamQuestionSets, hintExamSets, hintSupplementQuestions, textbookQuestions };`,
       loader: "tsx",
       resolveDir: fileURLToPath(new URL("../app", import.meta.url)),
       sourcefile: "page.tsx",
@@ -29,6 +29,7 @@ const {
   hintExamQuestionSets,
   hintExamSets,
   hintSupplementQuestions,
+  textbookQuestions,
 } = await loadQuestionBank();
 const pageUrl = new URL("../app/page.tsx", import.meta.url);
 const categories = new Set([
@@ -54,10 +55,10 @@ test("기본 활성화 AI 7개 영역은 모든 유형에 상세 해설을 제�
   const activeCategories = new Set([...categories].slice(3));
   const activeQuestions = questionBank.filter((question) => activeCategories.has(question.category));
   const inactiveQuestions = questionBank.filter((question) => !activeCategories.has(question.category));
-  assert.equal(activeQuestions.length, 340);
+  assert.equal(activeQuestions.length, 355);
   assert.equal(inactiveQuestions.length, 72);
-  assert.equal(Object.keys(explanationNotes).length, 340);
-  assert.equal(new Set(Object.values(explanationNotes)).size, 340);
+  assert.equal(Object.keys(explanationNotes).length, 355);
+  assert.equal(new Set(Object.values(explanationNotes)).size, 355);
   assert.deepEqual(new Set(activeQuestions.map((question) => question.kind)), new Set(["객관식", "단답형", "서술형"]));
   for (const question of activeQuestions) {
     const rawQuestion = rawPracticeQuestionBank.find((item) => item.id === question.id);
@@ -108,20 +109,20 @@ test("객관식 오답 채점 후 선택한 오답과 실제 정답 선택지를
 const kinds = new Set(["객관식", "단답형", "서술형"]);
 const difficulties = new Set(["기초", "핵심", "사고형", "고난도"]);
 
-test("412개 변형 문항과 10개 영역이 모두 있다", () => {
-  assert.equal(questionBank.length, 412);
+test("427개 문항과 10개 영역이 모두 있다", () => {
+  assert.equal(questionBank.length, 427);
   assert.deepEqual(new Set(questionBank.map((question) => question.category)), categories);
-  assert.equal(new Set(questionBank.map((question) => question.id)).size, 412);
+  assert.equal(new Set(questionBank.map((question) => question.id)).size, 427);
   const expectedCounts = {
     "Python·API·JSON": 24,
     "NumPy·Pandas": 24,
     "시각화·EDA": 24,
-    "ML 기초·검증": 50,
-    "회귀·신경망": 55,
-    "NLP·Transformer": 54,
-    "LLM·평가·안전": 54,
+    "ML 기초·검증": 53,
+    "회귀·신경망": 61,
+    "NLP·Transformer": 59,
+    "LLM·평가·안전": 52,
     "CNN·이미지 모델": 39,
-    "ViT·학습 전략": 44,
+    "ViT·학습 전략": 47,
     "파운데이션·VLM": 44,
   };
   for (const category of categories) {
@@ -182,6 +183,28 @@ test("교재 확인문제의 문항과 정답을 힌트 문제은행에 포함�
     assert.ok(item, `${question}: 교재 확인문제 누락`);
     assert.equal(item.answer, answer);
   }
+});
+
+test("교재 확인문제 66개를 모두 포함하고 교재의 명백한 오류는 바로잡는다", () => {
+  assert.equal(textbookQuestions.length, 53);
+  assert.equal(new Set(textbookQuestions.map(({ id }) => id)).size, 53);
+  for (const question of textbookQuestions) {
+    const item = questionBank.find(({ id }) => id === question.id);
+    assert.ok(item, `${question.id}: 추가 교재 확인문제 누락`);
+    assert.equal(item.answer, question.answer, `${question.id}: 교재 확인문제 정답 불일치`);
+  }
+  assert.equal(13 + textbookQuestions.length, 66);
+
+  const judge = questionBank.find(({ id }) => id === "tb-llm-02");
+  assert.equal(judge.choices.filter((choice) => choice === judge.answer).length, 1);
+  assert.match(judge.answer, /전혀 영향을 주지 않는다/);
+
+  const convex = questionBank.find(({ id }) => id === "tb-gd-03");
+  assert.match(convex.answer, /0 이상/);
+
+  const sgd = questionBank.find(({ id }) => id === "tb-gd-06");
+  assert.match(sgd.answer, /^SGD가 항상 더 빠르게 수렴하는 것은 아니다/);
+  assert.doesNotMatch(sgd.answer, /Epoch/);
 });
 
 test("모든 영역의 보강 문항 21~24가 포함된다", () => {

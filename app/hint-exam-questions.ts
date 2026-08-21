@@ -1,3 +1,5 @@
+import { textbookQuestions } from "./textbook-questions";
+
 type Kind = "객관식" | "단답형" | "서술형";
 type Category =
   | "ML 기초·검증"
@@ -397,7 +399,20 @@ const makeVariants = (spec: TopicSpec): HintQuestion[] => {
   ];
 };
 
-const variantsByTopic = specs.map(makeVariants);
+const variantsByTopic = specs.map((spec) => {
+  const variants = makeVariants(spec);
+  const availableSlots: Record<Kind, number[]> = {
+    "객관식": spec.bookQuestion ? [2, 4] : [0, 2, 4],
+    "단답형": [1],
+    "서술형": [3],
+  };
+  for (const question of textbookQuestions.filter((item) => item.topic === spec.topic)) {
+    const slot = availableSlots[question.kind].shift();
+    if (slot === undefined) continue;
+    variants[slot] = { ...question, topic: spec.topic } as HintQuestion;
+  }
+  return variants;
+});
 
 export const hintSupplementQuestions: HintQuestion[] = variantsByTopic.flat();
 
