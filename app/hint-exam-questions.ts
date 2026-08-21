@@ -382,20 +382,20 @@ const makeVariants = (spec: TopicSpec): HintQuestion[] => {
     question: `${spec.topic}에 대한 설명으로 옳은 것은?`,
     choices: [
       spec.definition,
-      `${spec.wrong[0]} ${spec.wrong[1]}`,
-      `${spec.wrong[1]} ${spec.wrong[2]}`,
-      `${spec.wrong[2]} ${spec.wrong[0]}`,
+      spec.wrong[0],
+      spec.wrong[1],
+      spec.wrong[2],
     ] as [string, string, string, string],
     answer: spec.definition,
   };
   const applicationAnswer = spec.application;
-  const incorrectAnswer = `${spec.wrong[0]} ${spec.wrong[1]}`;
+  const incorrectAnswer = [...spec.wrong].sort((left, right) => right.length - left.length)[0];
   return [
     { id: `hint5-${spec.key}-1`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "핵심", question: first.question, choices: first.choices, answer: first.answer, explanation: `${spec.definition} ${spec.caution}` },
     { id: `hint5-${spec.key}-2`, topic: spec.topic, category: spec.category, kind: "단답형", difficulty: "핵심", question: spec.shortQuestion, answer: spec.shortAnswer, explanation: `${spec.definition} ${spec.application} ${spec.caution}` },
-    { id: `hint5-${spec.key}-3`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "사고형", question: `${spec.topic}의 적용 또는 해석으로 가장 적절한 것은?`, choices: [applicationAnswer, `${spec.wrong[0]} ${spec.wrong[2]}`, `${spec.wrong[1]} ${spec.wrong[0]}`, `${spec.wrong[2]} ${spec.wrong[1]}`], answer: applicationAnswer, explanation: `${spec.application} ${spec.definition} ${spec.caution}` },
+    { id: `hint5-${spec.key}-3`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "사고형", question: `${spec.topic}의 적용 또는 해석으로 가장 적절한 것은?`, choices: [applicationAnswer, spec.wrong[0], spec.wrong[1], spec.wrong[2]], answer: applicationAnswer, explanation: `${spec.application} ${spec.definition} ${spec.caution}` },
     { id: `hint5-${spec.key}-4`, topic: spec.topic, category: spec.category, kind: "서술형", difficulty: "고난도", question: spec.essayQuestion, answer: spec.essayAnswer, explanation: `${spec.essayAnswer}\n\n${spec.caution}` },
-    { id: `hint5-${spec.key}-5`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "사고형", question: `${spec.topic}에 대한 설명으로 옳지 않은 것은?`, choices: [`${spec.definition} ${spec.caution}`, `${spec.application} ${spec.definition}`, `${spec.caution} ${spec.application}`, incorrectAnswer], answer: incorrectAnswer, explanation: `${incorrectAnswer}는 옳지 않다. ${spec.definition} ${spec.caution}` },
+    { id: `hint5-${spec.key}-5`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "사고형", question: `${spec.topic}에 대한 설명으로 옳지 않은 것은?`, choices: [spec.definition, spec.application, spec.caution, incorrectAnswer], answer: incorrectAnswer, explanation: `${incorrectAnswer}는 옳지 않다. ${spec.definition} ${spec.caution}` },
   ];
 };
 

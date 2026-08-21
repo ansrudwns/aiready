@@ -5,7 +5,7 @@ import { build } from "esbuild";
 const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 const result = await build({
   stdin: {
-    contents: `${source}\nexport { questionBank };`,
+    contents: `${source}\nexport { questionBank, rawPracticeQuestionBank, choiceBalanceOverrides };`,
     loader: "tsx",
     resolveDir: fileURLToPath(new URL("../app", import.meta.url)),
     sourcefile: "page.tsx",
@@ -16,8 +16,9 @@ const result = await build({
   write: false,
 });
 const moduleUrl = `data:text/javascript;base64,${Buffer.from(result.outputFiles[0].contents).toString("base64")}`;
-const { questionBank } = await import(moduleUrl);
-const questions = questionBank.filter((question) => question.kind === "객관식");
+const { questionBank, rawPracticeQuestionBank, choiceBalanceOverrides } = await import(moduleUrl);
+const selectedBank = process.argv.includes("--raw") ? rawPracticeQuestionBank : questionBank;
+const questions = selectedBank.filter((question) => question.kind === "객관식");
 const rows = questions.map((question) => {
   const lengths = question.choices.map((choice) => [...choice].length);
   const answerIndex = question.choices.indexOf(question.answer);
@@ -34,6 +35,8 @@ const rows = questions.map((question) => {
     wrongAverage: Number(wrongAverage.toFixed(1)),
     ratio: Number((answerLength / wrongAverage).toFixed(2)),
     uniqueLongest: answerLength > Math.max(...wrongLengths),
+    uniqueShortest: answerLength < Math.min(...wrongLengths),
+    overridden: Boolean(choiceBalanceOverrides[question.id]),
   };
 });
 
@@ -41,15 +44,18 @@ const categories = [...new Set(questions.map((question) => question.category))];
 const summary = {
   total: questions.length,
   uniqueLongest: rows.filter((row) => row.uniqueLongest).length,
-  ratio125: rows.filter((row) => row.ratio >= 1.25).length,
-  ratio150: rows.filter((row) => row.ratio >= 1.5).length,
+  uniqueShortest: rows.filter((row) => row.uniqueShortest).length,
+  belowHalf: rows.filter((row) => row.ratio < 0.5).length,
+  aboveDouble: rows.filter((row) => row.ratio > 2).length,
   categories: categories.map((category) => {
     const items = rows.filter((row) => row.category === category);
     return {
       category,
       total: items.length,
       uniqueLongest: items.filter((row) => row.uniqueLongest).length,
-      ratio150: items.filter((row) => row.ratio >= 1.5).length,
+      uniqueShortest: items.filter((row) => row.uniqueShortest).length,
+      belowHalf: items.filter((row) => row.ratio < 0.5).length,
+      aboveDouble: items.filter((row) => row.ratio > 2).length,
     };
   }),
 };
@@ -59,7 +65,7 @@ const selectedCategory = categoryArgument?.slice("--category=".length);
 if (process.argv.includes("--details")) {
   console.log(JSON.stringify({
     summary,
-    rows: rows.filter((row) => row.uniqueLongest && (!selectedCategory || row.category === selectedCategory)),
+    rows: rows.filter((row) => !selectedCategory || row.category === selectedCategory),
   }, null, 2));
 } else {
   console.log(JSON.stringify(summary, null, 2));

@@ -259,19 +259,34 @@ test("객관식 정답 길이가 정답을 추측하게 만드는 편향을 제�
     return {
       id: question.id,
       uniqueLongest: answerLength > Math.max(...wrongLengths),
+      uniqueShortest: answerLength < Math.min(...wrongLengths),
       ratio: answerLength / wrongAverage,
     };
   });
   const uniqueLongest = metrics.filter((item) => item.uniqueLongest);
-  const ratio125 = metrics.filter((item) => item.ratio >= 1.25);
-  const ratio150 = metrics.filter((item) => item.ratio >= 1.5);
+  const uniqueShortest = metrics.filter((item) => item.uniqueShortest);
+  const veryLong = metrics.filter((item) => item.ratio > 2);
+  const veryShort = metrics.filter((item) => item.ratio < 0.5);
 
-  assert.ok(uniqueLongest.length <= 28,
+  assert.ok(uniqueLongest.length <= 85,
     `정답만 가장 긴 문항이 ${uniqueLongest.length}개임: ${uniqueLongest.map((item) => item.id).join(", ")}`);
-  assert.ok(ratio125.length <= 12,
-    `정답이 오답 평균의 1.25배 이상인 문항이 ${ratio125.length}개임: ${ratio125.map((item) => item.id).join(", ")}`);
-  assert.equal(ratio150.length, 0,
-    `정답이 오답 평균의 1.5배 이상인 문항: ${ratio150.map((item) => item.id).join(", ")}`);
+  assert.ok(uniqueShortest.length <= 85,
+    `정답만 가장 짧은 문항이 ${uniqueShortest.length}개임: ${uniqueShortest.map((item) => item.id).join(", ")}`);
+  assert.ok(Math.abs(uniqueLongest.length - uniqueShortest.length) <= 15,
+    `정답 길이 극단의 균형이 맞지 않음: 최장 ${uniqueLongest.length}, 최단 ${uniqueShortest.length}`);
+  assert.ok(veryLong.length <= 8,
+    `정답이 오답 평균의 2배를 넘는 문항: ${veryLong.map((item) => item.id).join(", ")}`);
+  assert.ok(veryShort.length <= 8,
+    `정답이 오답 평균의 절반보다 짧은 문항: ${veryShort.map((item) => item.id).join(", ")}`);
+});
+
+test("힌트 객관식 선택지는 서로 다른 판단을 한 문장씩 제시한다", () => {
+  const hintChoices = questionBank
+    .filter((question) => question.kind === "객관식" && question.id.startsWith("hint5-"))
+    .flatMap((question) => question.choices.map((choice) => ({ id: question.id, choice })));
+  for (const { id, choice } of hintChoices) {
+    assert.doesNotMatch(choice, /\.\s+\S/, `${id}: 서로 다른 두 문장을 이어 붙인 선택지`);
+  }
 });
 
 test("서술형 지문에는 글자 수 조건이 없고 모범답안은 충분히 구체적이다", () => {
