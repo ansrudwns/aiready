@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { trackEvent } from "./analytics";
 import { checkShortAnswer } from "../src/grading.js";
 import { choiceBalanceOverrides } from "./choice-balance-overrides";
 import { foundationExplanationNotes, foundationQuestions } from "./foundation-questions";
@@ -2194,6 +2195,9 @@ export default function Home() {
   const [history, setHistory] = useState<History[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [wrongIds, setWrongIds] = useState<string[]>([]);
+  const examMetaRef = useRef<{ mode: string; hintRound?: number }>({ mode: "standard" });
+  const trackedQuestionIdsRef = useRef(new Set<string>());
+  const submittedAnalyticsRef = useRef(false);
 
   const latestRef = useRef({ questions, answers, wrongIds, history, selected });
   useEffect(() => {
@@ -2210,6 +2214,8 @@ export default function Home() {
   }, []);
 
   const submitExam = useCallback(() => {
+    if (submittedAnalyticsRef.current) return;
+    submittedAnalyticsRef.current = true;
     const live = latestRef.current;
     const liveResults = live.questions.map((question) => ({
       question,
@@ -2242,6 +2248,24 @@ export default function Home() {
           ...live.history,
         ].slice(0, 8)
       : live.history;
+
+    const answeredCount = Object.values(live.answers).filter((answer) => answer.trim()).length;
+    const scorePercent = objectiveResults.length
+      ? Math.round((liveScore / objectiveResults.length) * 100)
+      : 0;
+    trackEvent("exam_complete", {
+      exam_mode: examMetaRef.current.mode,
+      ...(examMetaRef.current.hintRound
+        ? { hint_round: examMetaRef.current.hintRound }
+        : {}),
+      question_count: live.questions.length,
+      answered_count: answeredCount,
+      graded_count: objectiveResults.length,
+      correct_count: liveScore,
+      wrong_count: objectiveResults.length - liveScore,
+      essay_count: liveResults.length - objectiveResults.length,
+      score_percent: scorePercent,
+    });
 
     setSubmitted(true);
     setWrongIds(nextWrong);
@@ -2289,7 +2313,12 @@ export default function Home() {
 
   function startExam(
     targetQuestions?: Question[],
-    options?: { allTargets?: boolean; fixedMinutes?: number | null },
+    options?: {
+      allTargets?: boolean;
+      fixedMinutes?: number | null;
+      mode?: "standard" | "hint" | "wrong_review" | "bookmark_review" | "result_retry";
+      hintRound?: number;
+    },
   ) {
     const available = questionBank.filter(
       (q) =>
@@ -2376,6 +2405,24 @@ export default function Home() {
           ? null
           : minutes * 60,
     );
+    const mode = options?.mode ?? "standard";
+    examMetaRef.current = { mode, hintRound: options?.hintRound };
+    trackedQuestionIdsRef.current = new Set<string>();
+    submittedAnalyticsRef.current = false;
+    trackEvent("exam_start", {
+      exam_mode: mode,
+      ...(options?.hintRound ? { hint_round: options.hintRound } : {}),
+      question_count: next.length,
+      timed: options && "fixedMinutes" in options
+        ? options.fixedMinutes !== null
+        : minutes !== null,
+      selected_category_count: selected.length,
+      selected_kind_count: selectedKinds.length,
+      selected_difficulty_count: selectedDifficulties.length,
+    });
+    if (mode === "wrong_review") {
+      trackEvent("wrong_review_start", { question_count: next.length });
+    }
     setSubmitted(false);
     setView("exam");
   }
@@ -2391,8 +2438,23 @@ export default function Home() {
   function revealAnswer(question: Question) {
     if (revealedIds.includes(question.id)) return;
 
+    const trackQuestionOnce = (eventName: "question_answered" | "answer_revealed", correct?: boolean) => {
+      if (trackedQuestionIdsRef.current.has(question.id)) return;
+      trackedQuestionIdsRef.current.add(question.id);
+      trackEvent(eventName, {
+        exam_mode: examMetaRef.current.mode,
+        ...(examMetaRef.current.hintRound
+          ? { hint_round: examMetaRef.current.hintRound }
+          : {}),
+        question_kind: question.kind,
+        question_category: question.category,
+        ...(typeof correct === "boolean" ? { is_correct: correct } : {}),
+      });
+    };
+
     if (question.kind === "서술형") {
       setRevealedIds((before) => [...before, question.id]);
+      trackQuestionOnce("answer_revealed");
       const nextWrong = wrongIds.includes(question.id)
         ? wrongIds
         : [...wrongIds, question.id];
@@ -2406,6 +2468,7 @@ export default function Home() {
     setRevealedIds((before) => [...before, question.id]);
 
     const correct = checkAnswer(question, answer);
+    trackQuestionOnce("question_answered", correct);
     const nextWrong = correct
       ? wrongIds.filter((id) => id !== question.id)
       : wrongIds.includes(question.id)
@@ -2760,11 +2823,11 @@ export default function Home() {
               개념을 확인하고 바로 다시 도전하세요.
             </p>
             <div className="result-actions">
-              <button className="primary" onClick={() => startExam()}>
+              <button className="primary" onClick={() => startExam(undefined, { mode: "result_retry" })}>
                 새 모의고사
               </button>
               {wrong.length > 0 && (
-                <button className="secondary" onClick={() => startExam(wrong)}>
+                <button className="secondary" onClick={() => startExam(wrong, { mode: "wrong_review" })}>
                   오답·서술형 {wrong.length}문제 다시 풀기
                 </button>
               )}
@@ -2904,7 +2967,10 @@ export default function Home() {
             <button
               disabled={!wrongIds.length}
               onClick={() =>
-                startExam(questionBank.filter((question) => wrongIds.includes(question.id)))
+                startExam(
+                  questionBank.filter((question) => wrongIds.includes(question.id)),
+                  { mode: "wrong_review" },
+                )
               }
             >
               오답 다시 풀기
@@ -2916,7 +2982,10 @@ export default function Home() {
             <button
               disabled={!marked.length}
               onClick={() =>
-                startExam(questionBank.filter((question) => marked.includes(question.id)))
+                startExam(
+                  questionBank.filter((question) => marked.includes(question.id)),
+                  { mode: "bookmark_review" },
+                )
               }
             >
               저장한 문제 풀기
@@ -2947,7 +3016,14 @@ export default function Home() {
             {hintExamQuestionSets.map((set, index) => (
               <button
                 key={index}
-                onClick={() => startExam(set, { allTargets: true, fixedMinutes: null })}
+                onClick={() =>
+                  startExam(set, {
+                    allTargets: true,
+                    fixedMinutes: null,
+                    mode: "hint",
+                    hintRound: index + 1,
+                  })
+                }
               >
                 {index + 1}회 시작
               </button>
