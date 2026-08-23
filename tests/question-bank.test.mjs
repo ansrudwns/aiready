@@ -8,7 +8,7 @@ async function loadQuestionBank() {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   const result = await build({
     stdin: {
-      contents: `${source}\nexport { questionBank, rawPracticeQuestionBank, explanationNotes, hintExamQuestionSets, hintExamSets, hintSupplementQuestions, textbookQuestions };`,
+      contents: `${source}\nexport { questionBank, rawPracticeQuestionBank, explanationNotes, hintExamQuestionSets, hintExamSets, hintSupplementQuestions, textbookQuestions, checkAnswer };`,
       loader: "tsx",
       resolveDir: fileURLToPath(new URL("../app", import.meta.url)),
       sourcefile: "page.tsx",
@@ -30,6 +30,7 @@ const {
   hintExamSets,
   hintSupplementQuestions,
   textbookQuestions,
+  checkAnswer,
 } = await loadQuestionBank();
 const pageUrl = new URL("../app/page.tsx", import.meta.url);
 const categories = new Set([
@@ -342,6 +343,14 @@ test("서술형 모범답안과 해설은 같은 문장을 반복하지 않는�
     const explanation = normalize(question.explanation);
     assert.notEqual(explanation, answer, `${question.id}: 모범답안과 해설이 같음`);
     assert.ok(!explanation.startsWith(answer), `${question.id}: 해설이 모범답안을 그대로 반복함`);
+  }
+});
+
+test("Top-P Sampling과 Nucleus Sampling을 같은 정답으로 인정한다", () => {
+  const question = questionBank.find((item) => item.id === "hint5-top-k-p-2");
+  assert.ok(question, "Top-P 단답형 문항 누락");
+  for (const answer of ["Nucleus Sampling", "top-p sampling", "Top-P", "누클리어스 샘플링"]) {
+    assert.equal(checkAnswer(question, answer), true, `${answer}: 정답 별칭을 인정하지 않음`);
   }
 });
 

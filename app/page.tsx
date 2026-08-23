@@ -2155,6 +2155,19 @@ function shuffle<T>(items: T[]): T[] {
 function checkAnswer(question: Question, answer: string) {
   if (question.kind === "서술형") return false;
   if (question.kind === "객관식") return answer === question.answer;
+  const acceptedAliases: Record<string, string[]> = {
+    "hint5-top-k-p-2": [
+      "top-p sampling",
+      "Top-P Sampling",
+      "Top-p Sampling",
+      "top-p",
+      "Top-P",
+      "nucleus sampling",
+      "Nucleus sampling",
+      "누클리어스 샘플링",
+    ],
+  };
+  if (acceptedAliases[question.id]?.some((alias) => checkShortAnswer(alias, answer))) return true;
   return checkShortAnswer(question.answer, answer);
 }
 
