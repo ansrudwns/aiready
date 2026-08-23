@@ -354,6 +354,15 @@ test("Top-P Sampling과 Nucleus Sampling을 같은 정답으로 인정한다", (
   }
 });
 
+test("CNN 출력 크기 계산 해설은 지문의 수치를 그대로 사용한다", () => {
+  const question = questionBank.find((item) => item.id === "hint5-cnn-output-2");
+  assert.ok(question, "CNN 출력 크기 단답형 문항 누락");
+  assert.equal(question.answer, "32");
+  assert.match(question.explanation, /32\+2×1-3/);
+  assert.match(question.explanation, /=32/);
+  assert.doesNotMatch(question.explanation, /입력 28|kernel 5/);
+});
+
 test("문제 내용과 ID가 중복되지 않는다", () => {
   const normalized = questionBank.map((question) =>
     `${question.question}\n${question.code ?? ""}`.replace(/\s+/g, " ").trim());

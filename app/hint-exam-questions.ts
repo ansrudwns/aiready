@@ -78,7 +78,7 @@ const specs: TopicSpec[] = [
     definition: "한 공간 축의 합성곱 출력 크기는 floor((입력+2×padding-kernel)/stride)+1로 계산한다.",
     wrong: ["출력 크기는 입력 크기에 kernel과 stride를 모두 곱해 계산한다.", "padding은 출력 크기 계산에 영향을 주지 않는다.", "stride가 커질수록 출력의 공간 크기도 항상 커진다."],
     shortQuestion: "입력 32, kernel 3, padding 1, stride 1인 합성곱의 한 축 출력 크기를 숫자로 작성하시오.", shortAnswer: "32",
-    application: "입력 28, kernel 5, padding 0, stride 1이면 (28-5)+1=24이므로 출력 공간 크기는 24×24이다.",
+    application: "문항의 값을 대입하면 floor((32+2×1-3)/1)+1=floor(31)+1=32이므로 한 축의 출력 크기는 32이다.",
     essayQuestion: "합성곱 출력 크기 식에서 padding과 stride가 공간 해상도에 미치는 영향을 예를 들어 설명하시오.",
     essayAnswer: "출력 한 축은 floor((H+2P-K)/S)+1로 계산한다. Padding P는 입력 둘레에 값을 더해 kernel을 적용할 위치를 늘리므로 출력 크기를 유지하거나 키우는 데 쓰인다. Stride S는 filter가 이동하는 간격이므로 1보다 커지면 적용 위치 수가 줄어 출력이 작아진다. 예를 들어 H=32, K=3, P=1, S=1이면 32이고 S=2이면 floor(31/2)+1=16이다.",
     caution: "높이와 너비를 각각 계산해야 하며 나누어떨어지지 않을 때는 floor가 적용된다는 점을 빼먹으면 안 된다.",
