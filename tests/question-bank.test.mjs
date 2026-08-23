@@ -51,29 +51,35 @@ test("초기 출제 범위는 AI 영역 7개만 선택한다", async () => {
   assert.match(page, /useState<Category\[\]>\(defaultCategories\)/);
 });
 
-test("기본 활성화 AI 7개 영역은 모든 유형에 상세 해설을 제공한다", () => {
+test("기본 활성화 AI 7개 영역은 문항별로 직접 관련된 해설을 제공한다", () => {
   const activeCategories = new Set([...categories].slice(3));
   const activeQuestions = questionBank.filter((question) => activeCategories.has(question.category));
   const inactiveQuestions = questionBank.filter((question) => !activeCategories.has(question.category));
   assert.equal(activeQuestions.length, 355);
   assert.equal(inactiveQuestions.length, 72);
-  assert.equal(Object.keys(explanationNotes).length, 355);
-  assert.equal(new Set(Object.values(explanationNotes)).size, 355);
+  assert.equal(Object.keys(explanationNotes).length, 180);
+  assert.equal(new Set(Object.values(explanationNotes)).size, 180);
   assert.deepEqual(new Set(activeQuestions.map((question) => question.kind)), new Set(["객관식", "단답형", "서술형"]));
   for (const question of activeQuestions) {
     const rawQuestion = rawPracticeQuestionBank.find((item) => item.id === question.id);
     assert.ok(rawQuestion, `${question.id}: 원문 문항 누락`);
-    assert.ok(explanationNotes[question.id], `${question.id}: 개별 보강 해설 누락`);
-    assert.ok(explanationNotes[question.id].length >= 70, `${question.id}: 개별 보강 해설이 너무 짧음`);
     assert.match(question.explanation, new RegExp(rawQuestion.explanation.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
       `${question.id}: 문항에 직접 작성된 해설이 유지되지 않음`);
-    assert.match(question.explanation, new RegExp(explanationNotes[question.id].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
-      `${question.id}: 개별 보강 해설이 결과에 포함되지 않음`);
-    assert.doesNotMatch(question.explanation, /쉽게 말하면|선택지를 비교할 때는 아래 설명|같은 유형에서는 문제의 숫자|모범답안에서는 결론만/,
+    const usesOnlyDirectExplanation = question.id.startsWith("hint5-") || question.id.startsWith("tb-");
+    if (usesOnlyDirectExplanation) {
+      assert.equal(explanationNotes[question.id], undefined, `${question.id}: 공통 생성 해설이 다시 연결됨`);
+      assert.equal(question.explanation, rawQuestion.explanation, `${question.id}: 직접 작성한 해설 외 문구가 붙음`);
+    } else {
+      assert.ok(explanationNotes[question.id], `${question.id}: 개별 보강 해설 누락`);
+      assert.ok(explanationNotes[question.id].length >= 70, `${question.id}: 개별 보강 해설이 너무 짧음`);
+      assert.match(question.explanation, new RegExp(explanationNotes[question.id].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+        `${question.id}: 개별 보강 해설이 결과에 포함되지 않음`);
+    }
+    assert.doesNotMatch(question.explanation, /쉽게 말하면|선택지를 비교할 때는 아래 설명|같은 유형에서는 문제의 숫자|모범답안에서는 결론만|문항에서는 정의만 외우기보다|지문의 조건을 바꾸면 같은 용어라도 결론이 달라질 수 있다|교재 확인문제 \d+에서는/,
       `${question.id}: 공통 자동 문장이 남음`);
     assert.doesNotMatch(question.explanation, /정답과 직접 근거|풀이 과정|핵심 개념|헷갈리기 쉬운 점/,
       `${question.id}: 불필요한 세부 제목이 남음`);
-    assert.ok(question.explanation.length >= 110, `${question.id}: 해설이 충분하지 않음`);
+    assert.ok(question.explanation.length >= 35, `${question.id}: 해설이 충분하지 않음`);
   }
   for (const question of inactiveQuestions) {
     assert.equal(explanationNotes[question.id], undefined, `${question.id}: 기본 비활성화 영역에 개별 보강이 적용됨`);

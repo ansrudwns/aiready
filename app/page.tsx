@@ -5,8 +5,8 @@ import { trackEvent } from "./analytics";
 import { checkShortAnswer } from "../src/grading.js";
 import { choiceBalanceOverrides } from "./choice-balance-overrides";
 import { foundationExplanationNotes, foundationQuestions } from "./foundation-questions";
-import { hintExamSets, hintExplanationNotes, hintSupplementQuestions } from "./hint-exam-questions";
-import { textbookExplanationNotes, textbookQuestions } from "./textbook-questions";
+import { hintExamSets, hintSupplementQuestions } from "./hint-exam-questions";
+import { textbookQuestions } from "./textbook-questions";
 import { visionQuestions } from "./vision-questions";
 
 type Kind = "객관식" | "단답형" | "서술형";
@@ -1727,8 +1727,6 @@ void easyExplanationGuides;
 
 const explanationNotes: Record<string, string> = {
   ...foundationExplanationNotes,
-  ...hintExplanationNotes,
-  ...textbookExplanationNotes,
   "ml-01": "포함 관계는 큰 범주에서 작은 범주로 읽으면 됩니다. AI에는 사람이 정한 규칙으로 작동하는 방식도 포함되고, ML은 데이터에서 규칙을 학습하는 AI, DL은 여러 층의 신경망을 사용하는 ML입니다.",
   "ml-02": "판단 기준은 예측 결과의 형태입니다. 결과가 가격처럼 연속된 숫자이면 회귀이고, 양성·음성처럼 미리 정한 종류 중 하나이면 분류입니다.",
   "ml-03": "분모 TP+FP는 모델이 양성이라고 판정한 전체 40건입니다. 그중 실제 양성인 TP가 30건이므로 30÷40=0.75이며, 이는 양성 판정 100건 중 약 75건이 맞는다는 뜻입니다.",

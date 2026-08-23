@@ -421,10 +421,3 @@ export const hintExamTopics = specs.map(({ topic, key }) => ({ topic, key }));
 export const hintExamSets: HintQuestion[][] = Array.from({ length: 5 }, (_, examIndex) =>
   variantsByTopic.map((variants, topicIndex) => variants[(examIndex + topicIndex) % 5]),
 );
-
-export const hintExplanationNotes: Record<string, string> = Object.fromEntries(
-  hintSupplementQuestions.map((question) => [
-    question.id,
-    `${question.topic} 문항에서는 정의만 외우기보다 입력과 출력, 학습 신호, 계산 순서와 적용 조건을 함께 구분해야 한다.\n\n정답: ${question.answer}\n\n지문의 조건을 바꾸면 같은 용어라도 결론이 달라질 수 있다.`,
-  ]),
-);
