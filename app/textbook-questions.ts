@@ -635,7 +635,7 @@ export const textbookQuestions: TextbookQuestion[] = [
     "ViT·학습 전략",
     "Leaky ReLU가 ReLU와 다른 점을 설명하시오.",
     "ReLU는 입력이 0 이하일 때 출력과 gradient를 모두 0으로 만들어 해당 뉴런이 계속 음수 영역에 머물면 학습이 멈추는 dying ReLU 문제가 생길 수 있다. Leaky ReLU는 음수 구간에도 αx처럼 작은 기울기와 출력을 남겨 gradient 통로를 유지한다. 양수 구간에서는 두 함수 모두 입력을 그대로 통과시킨다.",
-    "ReLU는 음수 입력에서 출력과 gradient가 0이지만 Leaky ReLU는 αx처럼 작은 기울기를 남긴다. 그래서 뉴런이 음수 영역에 머물러 학습이 멈추는 dying ReLU 문제를 완화할 수 있다.",
+    "답안에서는 두 함수의 음수 구간을 구분하는 것이 핵심이다. Leaky ReLU의 α는 작은 양수이므로 음수 입력도 완전히 차단되지 않으며, 양수 구간의 동작은 ReLU와 동일하다는 점까지 포함해야 한다.",
     "ReLU",
   ),
   essay(

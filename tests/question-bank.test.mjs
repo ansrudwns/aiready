@@ -335,6 +335,16 @@ test("서술형 지문에는 글자 수 조건이 없고 모범답안은 충분�
   }
 });
 
+test("서술형 모범답안과 해설은 같은 문장을 반복하지 않는다", () => {
+  const normalize = (text) => text.replace(/\s+/g, "").toLowerCase();
+  for (const question of questionBank.filter((item) => item.kind === "서술형")) {
+    const answer = normalize(question.answer);
+    const explanation = normalize(question.explanation);
+    assert.notEqual(explanation, answer, `${question.id}: 모범답안과 해설이 같음`);
+    assert.ok(!explanation.startsWith(answer), `${question.id}: 해설이 모범답안을 그대로 반복함`);
+  }
+});
+
 test("문제 내용과 ID가 중복되지 않는다", () => {
   const normalized = questionBank.map((question) =>
     `${question.question}\n${question.code ?? ""}`.replace(/\s+/g, " ").trim());

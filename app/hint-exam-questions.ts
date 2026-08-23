@@ -394,7 +394,7 @@ const makeVariants = (spec: TopicSpec): HintQuestion[] => {
     { id: `hint5-${spec.key}-1`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "핵심", question: first.question, choices: first.choices, answer: first.answer, explanation: `${spec.definition} ${spec.caution}` },
     { id: `hint5-${spec.key}-2`, topic: spec.topic, category: spec.category, kind: "단답형", difficulty: "핵심", question: spec.shortQuestion, answer: spec.shortAnswer, explanation: `${spec.definition} ${spec.application} ${spec.caution}` },
     { id: `hint5-${spec.key}-3`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "사고형", question: `${spec.topic}에 관한 다음 설명 중 실제 적용이나 해석에 가장 적절한 것은?`, choices: [applicationAnswer, spec.wrong[0], spec.wrong[1], spec.wrong[2]], answer: applicationAnswer, explanation: `${spec.application} ${spec.definition} ${spec.caution}` },
-    { id: `hint5-${spec.key}-4`, topic: spec.topic, category: spec.category, kind: "서술형", difficulty: "고난도", question: spec.essayQuestion, answer: spec.essayAnswer, explanation: `${spec.essayAnswer}\n\n${spec.caution}` },
+    { id: `hint5-${spec.key}-4`, topic: spec.topic, category: spec.category, kind: "서술형", difficulty: "고난도", question: spec.essayQuestion, answer: spec.essayAnswer, explanation: `${spec.definition}\n\n${spec.caution}` },
     { id: `hint5-${spec.key}-5`, topic: spec.topic, category: spec.category, kind: "객관식", difficulty: "사고형", question: `${spec.topic}에 대한 설명으로 옳지 않은 것은?`, choices: [spec.definition, spec.application, spec.caution, incorrectAnswer], answer: incorrectAnswer, explanation: `다음 설명은 옳지 않다.\n\n${incorrectAnswer}\n\n${spec.definition} ${spec.caution}` },
   ];
 };
